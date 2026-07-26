@@ -1,0 +1,56 @@
+<section class="page">
+  <header>
+    <h1>Álbuns</h1>
+    <p>Crie ensaios e associe a um cliente.</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+      <h2>Novo álbum</h2>
+      <div class="form-field">
+        <label for="title">Título</label>
+        <input id="title" formControlName="title" placeholder="Casamento João e Ana" />
+      </div>
+      <div class="form-field">
+        <label for="clientId">Cliente</label>
+        <select id="clientId" formControlName="clientId">
+          <option value="">Selecione</option>
+          @for (client of clients$ | async; track client.uid) {
+            <option [value]="client.uid">{{ client.name }} — {{ client.email }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="description">Descrição</label>
+        <textarea id="description" rows="3" formControlName="description"></textarea>
+      </div>
+
+      @if (message()) {
+        <p class="ok">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="err">{{ error() }}</p>
+      }
+
+      <button class="btn btn-primary" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Criando...' : 'Criar álbum' }}
+      </button>
+    </form>
+
+    <div class="panel">
+      <h2>Todos os álbuns</h2>
+      <ul>
+        @for (album of albums$ | async; track album.id) {
+          <li>
+            <a [routerLink]="['/admin/albuns', album.id]">
+              <strong>{{ album.title }}</strong>
+              <span>{{ album.clientName || album.clientId }}</span>
+            </a>
+          </li>
+        } @empty {
+          <li class="empty">Nenhum álbum criado.</li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>

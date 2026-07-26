@@ -1,0 +1,58 @@
+.back {
+  color: var(--nox-gold);
+  font-size: 0.85rem;
+}
+
+.page header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 1rem 0 1.75rem;
+  flex-wrap: wrap;
+}
+
+.page h1 {
+  color: var(--nox-gold);
+  font-size: 2.1rem;
+}
+
+.page header p,
+.empty {
+  color: var(--nox-muted);
+  margin-top: 0.35rem;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+figure {
+  margin: 0;
+  border: 1px solid var(--nox-border);
+  background: var(--nox-surface);
+}
+
+figure img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--nox-muted);
+}
+
+figcaption span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,50 @@
+<section class="page">
+  <a class="back" routerLink="/admin/albuns">← Voltar</a>
+
+  @if (album$ | async; as album) {
+    <header>
+      <h1>{{ album.title }}</h1>
+      <p>Cliente: {{ album.clientName || album.clientId }}</p>
+    </header>
+
+    <div class="panel upload">
+      <h2>Upload de fotos</h2>
+      <p>Selecione uma ou várias imagens para associar a este álbum.</p>
+      <label class="btn btn-primary file-btn">
+        {{ uploading() ? 'Enviando...' : 'Selecionar fotos' }}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          [disabled]="uploading()"
+          (change)="onFilesSelected($event, album.clientId)"
+        />
+      </label>
+      @if (uploading()) {
+        <div class="progress">
+          <span [style.width.%]="progress()"></span>
+        </div>
+      }
+      @if (message()) {
+        <p class="msg">{{ message() }}</p>
+      }
+    </div>
+
+    <div class="gallery">
+      @for (photo of photos$ | async; track photo.id) {
+        <figure>
+          <img [src]="photo.url" [alt]="photo.filename" />
+          <figcaption>
+            <span>{{ photo.filename }}</span>
+            <button type="button" class="btn btn-ghost" (click)="remove(photo)">Remover</button>
+          </figcaption>
+        </figure>
+      } @empty {
+        <p class="empty">Nenhuma foto neste álbum ainda.</p>
+      }
+    </div>
+  } @else {
+    <p class="empty">Álbum não encontrado.</p>
+  }
+</section>

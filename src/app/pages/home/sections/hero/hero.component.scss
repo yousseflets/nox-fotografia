@@ -1,0 +1,118 @@
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.hero__sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 38%, rgba(212, 175, 55, 0.14), transparent 60%),
+    radial-gradient(ellipse 90% 55% at 50% 100%, rgba(40, 55, 80, 0.35), transparent 55%),
+    linear-gradient(180deg, #000 0%, #050505 45%, #02050a 70%, #000 100%);
+}
+
+.hero__horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 38%;
+  background:
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.55) 30%, #000 100%),
+    linear-gradient(90deg, transparent 10%, rgba(212, 175, 55, 0.08) 50%, transparent 90%),
+    url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80')
+      center bottom / cover no-repeat;
+  opacity: 0.45;
+  mask-image: linear-gradient(180deg, transparent, #000 35%);
+}
+
+.hero__orbits {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.hero__orbits .orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -52%;
+}
+
+.orbit--lg {
+  width: min(52rem, 92vw);
+  aspect-ratio: 1;
+  animation: orbit-spin 80s linear infinite;
+}
+
+.orbit--md {
+  width: min(38rem, 72vw);
+  aspect-ratio: 1;
+  border-color: rgba(212, 175, 55, 0.16);
+  animation: orbit-spin 55s linear infinite reverse;
+}
+
+.orbit--sm {
+  width: min(26rem, 54vw);
+  aspect-ratio: 1;
+  border-color: rgba(212, 175, 55, 0.28);
+  animation: orbit-spin 40s linear infinite;
+}
+
+.hero__content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 6.5rem 1.25rem 4rem;
+  animation: fade-up 1s ease both;
+}
+
+.hero__logo {
+  width: min(30rem, 86vw);
+  height: auto;
+  margin-inline: auto;
+  animation: moon-glow 5s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+.hero__tagline {
+  margin-top: 1.5rem;
+  max-width: 34rem;
+  margin-inline: auto;
+  color: rgba(245, 239, 224, 0.9);
+  font-size: clamp(0.72rem, 1.5vw, 0.88rem);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-weight: 400;
+  animation: fade-up 1s ease 0.2s both;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.9rem;
+  margin-top: 2.4rem;
+  animation: fade-up 1s ease 0.35s both;
+}
+
+@media (max-width: 600px) {
+  .hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: min(100%, 18rem);
+    margin-inline: auto;
+  }
+
+  .orbit--lg,
+  .orbit--md {
+    display: none;
+  }
+}

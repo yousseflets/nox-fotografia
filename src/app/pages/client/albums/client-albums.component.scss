@@ -1,0 +1,48 @@
+.page header {
+  margin-bottom: 1.75rem;
+}
+
+.page h1 {
+  color: var(--nox-gold);
+  font-size: 2.2rem;
+}
+
+.page header p,
+.empty,
+.album__meta span {
+  color: var(--nox-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.album {
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.album:hover {
+  border-color: var(--nox-gold);
+  transform: translateY(-2px);
+}
+
+.album__cover {
+  height: 160px;
+  background:
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.55)),
+    var(--nox-surface-2) center / cover no-repeat;
+}
+
+.album__meta {
+  padding: 1rem 1.1rem 1.2rem;
+}
+
+.album__meta h2 {
+  color: var(--nox-cream);
+  font-size: 1.25rem;
+  margin-bottom: 0.35rem;
+}

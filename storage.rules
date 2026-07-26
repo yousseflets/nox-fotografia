@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function ownsClient(clientId) {
+      return signedIn() && request.auth.uid == clientId;
+    }
+
+    match /clients/{clientId}/albums/{albumId}/{fileName} {
+      allow read: if isAdmin() || ownsClient(clientId);
+      allow write: if isAdmin();
+    }
+  }
+}

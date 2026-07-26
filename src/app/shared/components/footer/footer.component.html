@@ -1,0 +1,27 @@
+<footer class="footer" id="contato">
+  <div class="footer__cta section">
+    <div class="container footer__cta-inner">
+      <h2>Vamos criar algo inesquecível juntos.</h2>
+      <a class="btn btn-primary" href="https://wa.me/5511989273898" target="_blank" rel="noopener">
+        Solicitar orçamento +
+      </a>
+    </div>
+  </div>
+
+  <div class="footer__main container">
+    <div class="footer__brand">
+      <img src="/logo-nox.png" alt="NOX Fotografia" class="footer__logo" />
+    </div>
+
+    <div class="footer__contacts">
+      @for (item of contacts; track item.label) {
+        <a [href]="item.href" target="_blank" rel="noopener">
+          <strong>{{ item.label }}</strong>
+          <span>{{ item.value }}</span>
+        </a>
+      }
+    </div>
+  </div>
+
+  <p class="footer__copy">© {{ year }} NOX Fotografia - todos os direitos reservados.</p>
+</footer>

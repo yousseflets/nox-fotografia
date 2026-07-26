@@ -1,0 +1,41 @@
+.shell {
+  min-height: 100vh;
+  background: var(--nox-black);
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--nox-border);
+  background: var(--nox-black-soft);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand img {
+  height: 2.5rem;
+  width: auto;
+  object-fit: contain;
+}
+
+.top__right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--nox-muted);
+  font-size: 0.9rem;
+}
+
+.top__right a {
+  color: var(--nox-gold);
+}
+
+.content {
+  padding: 2rem 0 3rem;
+}

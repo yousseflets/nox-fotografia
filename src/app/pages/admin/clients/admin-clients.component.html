@@ -1,0 +1,51 @@
+<section class="page">
+  <header>
+    <h1>Clientes</h1>
+    <p>Cadastre clientes e associe álbuns depois.</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+      <h2>Novo cliente</h2>
+      <div class="form-field">
+        <label for="name">Nome</label>
+        <input id="name" formControlName="name" />
+      </div>
+      <div class="form-field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" formControlName="email" />
+      </div>
+      <div class="form-field">
+        <label for="password">Senha temporária</label>
+        <input id="password" type="password" formControlName="password" />
+      </div>
+
+      @if (message()) {
+        <p class="ok">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="err">{{ error() }}</p>
+      }
+
+      <button class="btn btn-primary" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Salvando...' : 'Cadastrar cliente' }}
+      </button>
+    </form>
+
+    <div class="panel">
+      <h2>Lista</h2>
+      <ul>
+        @for (client of clients$ | async; track client.uid) {
+          <li>
+            <div>
+              <strong>{{ client.name }}</strong>
+              <span>{{ client.email }}</span>
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">Nenhum cliente cadastrado.</li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>

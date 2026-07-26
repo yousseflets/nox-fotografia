@@ -1,0 +1,24 @@
+<div class="shell">
+  <aside class="sidebar">
+    <a class="sidebar__brand" routerLink="/">
+      <img src="/logo-nox.png" alt="NOX Fotografia" />
+      <span>Admin</span>
+    </a>
+    <nav>
+      <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        Dashboard
+      </a>
+      <a routerLink="/admin/clientes" routerLinkActive="active">Clientes</a>
+      <a routerLink="/admin/albuns" routerLinkActive="active">Álbuns</a>
+    </nav>
+    <div class="sidebar__footer">
+      @if (auth.user$ | async; as user) {
+        <p>{{ user.name }}</p>
+      }
+      <button class="btn btn-outline" type="button" (click)="logout()">Sair</button>
+    </div>
+  </aside>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

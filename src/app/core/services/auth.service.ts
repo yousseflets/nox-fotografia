@@ -1,0 +1,79 @@
+import { Injectable, inject } from '@angular/core';
+import {
+  Auth,
+  authState,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  User,
+} from '@angular/fire/auth';
+import {
+  Firestore,
+  doc,
+  docData,
+  setDoc,
+} from '@angular/fire/firestore';
+import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword as createSecondary } from 'firebase/auth';
+import { Observable, of, switchMap, map, shareReplay } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { AppUser, UserRole } from '../models/user.model';
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly auth = inject(Auth);
+  private readonly firestore = inject(Firestore);
+
+  readonly firebaseUser$: Observable<User | null> = authState(this.auth);
+
+  readonly user$: Observable<AppUser | null> = this.firebaseUser$.pipe(
+    switchMap((user) => {
+      if (!user) return of(null);
+      return docData(doc(this.firestore, `users/${user.uid}`)).pipe(
+        map((data) => (data ? ({ uid: user.uid, ...data } as AppUser) : null))
+      );
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
+  login(email: string, password: string) {
+    return signInWithEmailAndPassword(this.auth, email, password);
+  }
+
+  async register(name: string, email: string, password: string, role: UserRole = 'client') {
+    const credential = await createUserWithEmailAndPassword(this.auth, email, password);
+    await updateProfile(credential.user, { displayName: name });
+    await this.saveUserProfile(credential.user.uid, name, email, role);
+    return credential;
+  }
+
+  /** Cria cliente sem deslogar o admin (app Auth secundário). */
+  async createClientAccount(name: string, email: string, password: string): Promise<string> {
+    let secondaryApp: FirebaseApp | null = null;
+    try {
+      secondaryApp = initializeApp(environment.firebase, `secondary-${Date.now()}`);
+      const secondaryAuth = getAuth(secondaryApp);
+      const credential = await createSecondary(secondaryAuth, email, password);
+      await this.saveUserProfile(credential.user.uid, name, email, 'client');
+      return credential.user.uid;
+    } finally {
+      if (secondaryApp) await deleteApp(secondaryApp);
+    }
+  }
+
+  private saveUserProfile(uid: string, name: string, email: string, role: UserRole) {
+    const profile: AppUser = {
+      uid,
+      name,
+      email,
+      role,
+      createdAt: new Date().toISOString(),
+    };
+    return setDoc(doc(this.firestore, `users/${uid}`), profile);
+  }
+
+  logout() {
+    return signOut(this.auth);
+  }
+}

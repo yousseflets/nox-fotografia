@@ -1,0 +1,68 @@
+.dash header {
+  margin-bottom: 2rem;
+}
+
+.dash h1 {
+  color: var(--nox-gold);
+  font-size: 2.2rem;
+}
+
+.dash header p,
+.dash__stats span {
+  color: var(--nox-muted);
+}
+
+.dash__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 14rem));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dash__stats strong {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 2rem;
+  color: var(--nox-gold);
+  font-family: var(--font-display);
+}
+
+.dash__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.panel h2 {
+  color: var(--nox-gold);
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+}
+
+li a {
+  color: var(--nox-cream);
+}
+
+li a:hover {
+  color: var(--nox-gold);
+}
+
+li span,
+.empty {
+  color: var(--nox-muted);
+}

@@ -1,0 +1,28 @@
+<section class="testimonials section" id="depoimentos">
+  <div class="container">
+    <header class="testimonials__head">
+      <p class="section-kicker">Histórias reais</p>
+      <h2 class="section-title">Depoimentos</h2>
+    </header>
+
+    <div class="testimonials__wrap">
+      <button class="nav-btn" type="button" aria-label="Anterior" (click)="prev()">‹</button>
+
+      <div class="testimonials__grid">
+        @for (item of visibleItems(); track item.name) {
+          <article class="quote">
+            <span class="quote__mark" aria-hidden="true">“</span>
+            <p>{{ item.quote }}</p>
+            <div class="quote__stars" aria-label="5 estrelas">★★★★★</div>
+            <div class="quote__author">
+              <img [src]="item.photo" [alt]="item.name" />
+              <strong>{{ item.name }}</strong>
+            </div>
+          </article>
+        }
+      </div>
+
+      <button class="nav-btn" type="button" aria-label="Próximo" (click)="next()">›</button>
+    </div>
+  </div>
+</section>

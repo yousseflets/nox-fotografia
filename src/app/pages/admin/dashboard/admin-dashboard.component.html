@@ -1,0 +1,36 @@
+<section class="dash">
+  <header>
+    <h1>Dashboard</h1>
+    <p>Gerencie clientes, álbuns e o upload das fotos.</p>
+  </header>
+
+  <div class="dash__stats">
+    <article class="panel">
+      <span>Clientes</span>
+      <strong>{{ clientCount$ | async }}</strong>
+    </article>
+    <article class="panel">
+      <span>Álbuns</span>
+      <strong>{{ albumCount$ | async }}</strong>
+    </article>
+  </div>
+
+  <div class="dash__actions">
+    <a class="btn btn-primary" routerLink="/admin/clientes">Cadastrar cliente</a>
+    <a class="btn btn-outline" routerLink="/admin/albuns">Criar álbum</a>
+  </div>
+
+  <div class="panel">
+    <h2>Álbuns recentes</h2>
+    <ul>
+      @for (album of recentAlbums$ | async; track album.id) {
+        <li>
+          <a [routerLink]="['/admin/albuns', album.id]">{{ album.title }}</a>
+          <span>{{ album.clientName || album.clientId }}</span>
+        </li>
+      } @empty {
+        <li class="empty">Nenhum álbum ainda.</li>
+      }
+    </ul>
+  </div>
+</section>

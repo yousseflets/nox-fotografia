@@ -1,0 +1,36 @@
+<header class="nav" [class.nav--scrolled]="scrolled">
+  <div class="nav__inner container">
+    <a class="nav__brand" routerLink="/" (click)="closeMenu()">
+      <img src="/logo-nox.png" alt="NOX Fotografia" class="nav__logo" />
+    </a>
+
+    <button
+      class="nav__burger"
+      type="button"
+      [attr.aria-expanded]="menuOpen"
+      aria-label="Abrir menu"
+      (click)="toggleMenu()"
+    >
+      <span></span><span></span>
+    </button>
+
+    <nav class="nav__links" [class.nav__links--open]="menuOpen">
+      @for (link of links; track link.href) {
+        <a [href]="link.href" (click)="closeMenu()">{{ link.label }}</a>
+      }
+      @if (auth.user$ | async; as user) {
+        <a
+          class="nav__area"
+          [routerLink]="user.role === 'admin' ? '/admin' : '/cliente'"
+          (click)="closeMenu()"
+        >
+          Minha área
+        </a>
+      } @else {
+        <a routerLink="/login" (click)="closeMenu()">Entrar</a>
+      }
+    </nav>
+
+    <a class="btn btn-primary nav__cta" href="#contato">Agendar ensaio</a>
+  </div>
+</header>
