@@ -7,7 +7,6 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   onSnapshot,
 } from '@angular/fire/firestore';
 import {
@@ -17,7 +16,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from '@angular/fire/storage';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { Photo } from '../models/photo.model';
 
 @Injectable({ providedIn: 'root' })
@@ -26,10 +25,10 @@ export class PhotoService {
   private readonly storage = inject(Storage);
 
   getByAlbum(albumId: string): Observable<Photo[]> {
+    // Sem orderBy no Firestore para não exigir índice composto (albumId + createdAt).
     const q = query(
       collection(this.firestore, 'photos'),
-      where('albumId', '==', albumId),
-      orderBy('createdAt', 'desc')
+      where('albumId', '==', albumId)
     );
 
     return new Observable<Photo[]>((subscriber) => {
@@ -44,7 +43,17 @@ export class PhotoService {
         (err) => subscriber.error(err)
       );
       return () => unsub();
-    });
+    }).pipe(
+      map((list) =>
+        [...list].sort((a, b) =>
+          (b.createdAt || '').localeCompare(a.createdAt || '')
+        )
+      ),
+      catchError((err) => {
+        console.error('[PhotoService.getByAlbum]', err);
+        return of([]);
+      })
+    );
   }
 
   async uploadPhoto(

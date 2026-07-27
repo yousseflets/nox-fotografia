@@ -103,11 +103,22 @@ export class AlbumService {
   }
 
   getByClient(clientId: string): Observable<Album[]> {
+    // Sem orderBy no Firestore para não exigir índice composto (clientId + createdAt).
     return collection$<Album>(
       this.firestore,
       'albums',
-      [where('clientId', '==', clientId), orderBy('createdAt', 'desc')],
+      [where('clientId', '==', clientId)],
       'id'
+    ).pipe(
+      map((list) =>
+        [...list].sort((a, b) =>
+          (b.createdAt || '').localeCompare(a.createdAt || '')
+        )
+      ),
+      catchError((err) => {
+        console.error('[AlbumService.getByClient]', err);
+        return of([]);
+      })
     );
   }
 
