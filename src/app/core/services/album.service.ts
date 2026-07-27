@@ -12,7 +12,7 @@ import {
   onSnapshot,
   QueryConstraint,
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { Album } from '../models/album.model';
 import { AppUser } from '../models/user.model';
 
@@ -65,11 +65,22 @@ export class UserService {
   private readonly firestore = inject(Firestore);
 
   getClients(): Observable<AppUser[]> {
+    // Sem orderBy no Firestore para não exigir índice composto (role + name).
     return collection$<AppUser>(
       this.firestore,
       'users',
-      [where('role', '==', 'client'), orderBy('name')],
+      [where('role', '==', 'client')],
       'uid'
+    ).pipe(
+      map((list) =>
+        [...list].sort((a, b) =>
+          (a.name || '').localeCompare(b.name || '', 'pt-BR')
+        )
+      ),
+      catchError((err) => {
+        console.error('[UserService.getClients]', err);
+        return of([]);
+      })
     );
   }
 
