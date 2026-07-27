@@ -50,20 +50,6 @@
   font-size: 0.8rem;
 }
 
-.quote__author {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.quote__author img {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid var(--nox-gold);
-}
-
 .quote__author strong {
   font-size: 0.68rem;
   letter-spacing: 0.16em;
