@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { take } from 'rxjs';
 import { AlbumService, UserService } from '../../../core/services/album.service';
+import { Album } from '../../../core/models/album.model';
 
 @Component({
   selector: 'app-admin-albums',
@@ -41,9 +42,7 @@ export class AdminAlbumsComponent {
 
     try {
       const value = this.form.getRawValue();
-      const clients = await new Promise<
-        { uid: string; name: string }[]
-      >((resolve) => {
+      const clients = await new Promise<{ uid: string; name: string }[]>((resolve) => {
         this.clients$.pipe(take(1)).subscribe((list) => resolve(list));
       });
       const client = clients.find((c) => c.uid === value.clientId);
@@ -58,6 +57,30 @@ export class AdminAlbumsComponent {
       this.form.reset();
     } catch {
       this.error.set('Não foi possível criar o álbum.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async remove(album: Album, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!album.id) return;
+
+    const ok = confirm(
+      `Excluir o álbum "${album.title}"?\nTodas as fotos deste álbum também serão removidas.`
+    );
+    if (!ok) return;
+
+    this.loading.set(true);
+    this.error.set('');
+    this.message.set('');
+
+    try {
+      await this.albums.deleteAlbum(album.id);
+      this.message.set('Álbum excluído.');
+    } catch {
+      this.error.set('Não foi possível excluir o álbum.');
     } finally {
       this.loading.set(false);
     }

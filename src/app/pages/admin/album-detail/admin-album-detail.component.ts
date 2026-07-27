@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
 import { Photo } from '../../../core/models/photo.model';
@@ -14,10 +14,12 @@ import { Photo } from '../../../core/models/photo.model';
 })
 export class AdminAlbumDetailComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly albums = inject(AlbumService);
   private readonly photos = inject(PhotoService);
 
   readonly uploading = signal(false);
+  readonly deleting = signal(false);
   readonly progress = signal(0);
   readonly message = signal('');
 
@@ -53,5 +55,23 @@ export class AdminAlbumDetailComponent {
   async remove(photo: Photo) {
     if (!confirm(`Remover ${photo.filename}?`)) return;
     await this.photos.deletePhoto(photo);
+  }
+
+  async deleteAlbum(title: string) {
+    const ok = confirm(
+      `Excluir o álbum "${title}"?\nTodas as fotos deste álbum também serão removidas.`
+    );
+    if (!ok) return;
+
+    this.deleting.set(true);
+    this.message.set('');
+
+    try {
+      await this.albums.deleteAlbum(this.albumId);
+      await this.router.navigateByUrl('/admin/albuns');
+    } catch {
+      this.message.set('Não foi possível excluir o álbum.');
+      this.deleting.set(false);
+    }
   }
 }

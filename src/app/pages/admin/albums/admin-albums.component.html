@@ -16,7 +16,7 @@
         <select id="clientId" formControlName="clientId">
           <option value="">Selecione</option>
           @for (client of clients$ | async; track client.uid) {
-            <option [value]="client.uid">{{ client.name }} — {{ client.email }}</option>
+            <option [value]="client.uid">{{ client.name }}  {{ client.email }}</option>
           }
         </select>
       </div>
@@ -46,6 +46,14 @@
               <strong>{{ album.title }}</strong>
               <span>{{ album.clientName || album.clientId }}</span>
             </a>
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="loading()"
+              (click)="remove(album, $event)"
+            >
+              Excluir
+            </button>
           </li>
         } @empty {
           <li class="empty">Nenhum álbum criado.</li>

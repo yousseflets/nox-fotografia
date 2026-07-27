@@ -64,7 +64,7 @@ export class AuthService {
     return credential;
   }
 
-  /** Cria cliente sem deslogar o admin (app Auth secund·rio). */
+  /** Cria cliente sem deslogar o admin (app Auth secund√°rio). */
   async createClientAccount(name: string, email: string, password: string): Promise<string> {
     let secondaryApp: FirebaseApp | null = null;
     try {

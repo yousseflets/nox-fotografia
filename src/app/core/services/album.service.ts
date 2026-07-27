@@ -12,9 +12,10 @@ import {
   onSnapshot,
   QueryConstraint,
 } from '@angular/fire/firestore';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, firstValueFrom, map, of } from 'rxjs';
 import { Album } from '../models/album.model';
 import { AppUser } from '../models/user.model';
+import { PhotoService } from './photo.service';
 
 function collection$<T extends object>(
   firestore: Firestore,
@@ -61,37 +62,9 @@ function doc$<T extends object>(
 }
 
 @Injectable({ providedIn: 'root' })
-export class UserService {
-  private readonly firestore = inject(Firestore);
-
-  getClients(): Observable<AppUser[]> {
-    // Sem orderBy no Firestore para n„o exigir Ìndice composto (role + name).
-    return collection$<AppUser>(
-      this.firestore,
-      'users',
-      [where('role', '==', 'client')],
-      'uid'
-    ).pipe(
-      map((list) =>
-        [...list].sort((a, b) =>
-          (a.name || '').localeCompare(b.name || '', 'pt-BR')
-        )
-      ),
-      catchError((err) => {
-        console.error('[UserService.getClients]', err);
-        return of([]);
-      })
-    );
-  }
-
-  getUser(uid: string): Observable<AppUser | undefined> {
-    return doc$<AppUser>(this.firestore, `users/${uid}`, 'uid');
-  }
-}
-
-@Injectable({ providedIn: 'root' })
 export class AlbumService {
   private readonly firestore = inject(Firestore);
+  private readonly photos = inject(PhotoService);
 
   getAll(): Observable<Album[]> {
     return collection$<Album>(
@@ -103,7 +76,7 @@ export class AlbumService {
   }
 
   getByClient(clientId: string): Observable<Album[]> {
-    // Sem orderBy no Firestore para n„o exigir Ìndice composto (clientId + createdAt).
+    // Sem orderBy no Firestore para n√£o exigir √≠ndice composto (clientId + createdAt).
     return collection$<Album>(
       this.firestore,
       'albums',
@@ -137,5 +110,55 @@ export class AlbumService {
 
   delete(albumId: string) {
     return deleteDoc(doc(this.firestore, `albums/${albumId}`));
+  }
+
+  async deleteAlbum(albumId: string): Promise<void> {
+    await this.photos.deleteByAlbum(albumId);
+    await this.delete(albumId);
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  private readonly firestore = inject(Firestore);
+  private readonly albums = inject(AlbumService);
+
+  getClients(): Observable<AppUser[]> {
+    // Sem orderBy no Firestore para n√£o exigir √≠ndice composto (role + name).
+    return collection$<AppUser>(
+      this.firestore,
+      'users',
+      [where('role', '==', 'client')],
+      'uid'
+    ).pipe(
+      map((list) =>
+        [...list].sort((a, b) =>
+          (a.name || '').localeCompare(b.name || '', 'pt-BR')
+        )
+      ),
+      catchError((err) => {
+        console.error('[UserService.getClients]', err);
+        return of([]);
+      })
+    );
+  }
+
+  getUser(uid: string): Observable<AppUser | undefined> {
+    return doc$<AppUser>(this.firestore, `users/${uid}`, 'uid');
+  }
+
+  updateClient(uid: string, data: Pick<AppUser, 'name' | 'email'>) {
+    return updateDoc(doc(this.firestore, `users/${uid}`), {
+      name: data.name,
+      email: data.email,
+    });
+  }
+
+  async deleteClient(uid: string): Promise<void> {
+    const albums = await firstValueFrom(this.albums.getByClient(uid));
+    for (const album of albums) {
+      if (album.id) await this.albums.deleteAlbum(album.id);
+    }
+    await deleteDoc(doc(this.firestore, `users/${uid}`));
   }
 }

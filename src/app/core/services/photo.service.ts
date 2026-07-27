@@ -5,6 +5,7 @@ import {
   doc,
   addDoc,
   deleteDoc,
+  getDocs,
   query,
   where,
   onSnapshot,
@@ -15,6 +16,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
+  getBlob,
 } from '@angular/fire/storage';
 import { Observable, catchError, map, of } from 'rxjs';
 import { Photo } from '../models/photo.model';
@@ -25,7 +27,7 @@ export class PhotoService {
   private readonly storage = inject(Storage);
 
   getByAlbum(albumId: string): Observable<Photo[]> {
-    // Sem orderBy no Firestore para n„o exigir Ìndice composto (albumId + createdAt).
+    // Sem orderBy no Firestore para n√£o exigir √≠ndice composto (albumId + createdAt).
     const q = query(
       collection(this.firestore, 'photos'),
       where('albumId', '==', albumId)
@@ -54,6 +56,18 @@ export class PhotoService {
         return of([]);
       })
     );
+  }
+
+  /** Baixa o arquivo via SDK (precisa de CORS no bucket). */
+  async getPhotoBlob(photo: Photo): Promise<Blob> {
+    if (photo.storagePath) {
+      return getBlob(ref(this.storage, photo.storagePath));
+    }
+    const response = await fetch(photo.url);
+    if (!response.ok) {
+      throw new Error(`Falha ao baixar foto (${response.status})`);
+    }
+    return response.blob();
   }
 
   async uploadPhoto(
@@ -98,11 +112,20 @@ export class PhotoService {
       try {
         await deleteObject(ref(this.storage, photo.storagePath));
       } catch {
-        // arquivo pode j· ter sido removido
+        // arquivo pode j√° ter sido removido
       }
     }
     if (photo.id) {
       await deleteDoc(doc(this.firestore, `photos/${photo.id}`));
+    }
+  }
+
+  async deleteByAlbum(albumId: string): Promise<void> {
+    const snap = await getDocs(
+      query(collection(this.firestore, 'photos'), where('albumId', '==', albumId))
+    );
+    for (const d of snap.docs) {
+      await this.deletePhoto({ id: d.id, ...d.data() } as Photo);
     }
   }
 }

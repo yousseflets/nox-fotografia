@@ -4,8 +4,14 @@
   letter-spacing: 0.08em;
 }
 
-.page header {
+.page header,
+.page-head {
   margin: 1rem 0 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .page h1 {

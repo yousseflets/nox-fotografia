@@ -31,20 +31,33 @@ export class ClientAlbumDetailComponent {
 
     try {
       const zip = new JSZip();
-      const folder = zip.folder(albumTitle.replace(/[^\w\- ]+/g, '').trim() || 'album');
+      const folderName = (albumTitle || 'album')
+        .replace(/[^\w\- ]+/g, '')
+        .trim() || 'album';
+      const folder = zip.folder(folderName);
+      const usedNames = new Set<string>();
 
-      await Promise.all(
-        photos.map(async (photo, index) => {
-          const response = await fetch(photo.url);
-          const blob = await response.blob();
-          const name = photo.filename || `foto-${index + 1}.jpg`;
-          folder?.file(name, blob);
-        })
-      );
+      for (let index = 0; index < photos.length; index++) {
+        const photo = photos[index];
+        const blob = await this.photos.getPhotoBlob(photo);
+        let name = photo.filename || `foto-${index + 1}.jpg`;
+        if (usedNames.has(name)) {
+          const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
+          const base = ext ? name.slice(0, -ext.length) : name;
+          name = `${base}-${index + 1}${ext}`;
+        }
+        usedNames.add(name);
+        folder?.file(name, blob);
+      }
 
-      const content = await zip.generateAsync({ type: 'blob' });
-      saveAs(content, `${albumTitle || 'album'}.zip`);
-    } catch {
+      const content = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 },
+      });
+      saveAs(content, `${folderName}.zip`);
+    } catch (err) {
+      console.error('[downloadAll]', err);
       alert('Não foi possível gerar o ZIP. Tente baixar as fotos individualmente.');
     } finally {
       this.zipping.set(false);

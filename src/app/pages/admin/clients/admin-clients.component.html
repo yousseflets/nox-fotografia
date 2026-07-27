@@ -6,7 +6,7 @@
 
   <div class="grid">
     <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
-      <h2>Novo cliente</h2>
+      <h2>{{ editingUid() ? 'Novo cliente' : 'Novo cliente' }}</h2>
       <div class="form-field">
         <label for="name">Nome</label>
         <input id="name" formControlName="name" />
@@ -15,10 +15,12 @@
         <label for="email">E-mail</label>
         <input id="email" type="email" formControlName="email" />
       </div>
-      <div class="form-field">
-        <label for="password">Senha temporária</label>
-        <input id="password" type="password" formControlName="password" />
-      </div>
+      @if (!editingUid()) {
+        <div class="form-field">
+          <label for="password">Senha temporária</label>
+          <input id="password" type="password" formControlName="password" />
+        </div>
+      }
 
       @if (message()) {
         <p class="ok">{{ message() }}</p>
@@ -27,9 +29,22 @@
         <p class="err">{{ error() }}</p>
       }
 
-      <button class="btn btn-primary" type="submit" [disabled]="loading()">
-        {{ loading() ? 'Salvando...' : 'Cadastrar cliente' }}
-      </button>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" [disabled]="loading()">
+          {{
+            loading()
+              ? 'Salvando...'
+              : editingUid()
+                ? 'Salvar alterações'
+                : 'Cadastrar cliente'
+          }}
+        </button>
+        @if (editingUid()) {
+          <button class="btn btn-outline btn-sm" type="button" (click)="cancelEdit()">
+            Cancelar
+          </button>
+        }
+      </div>
     </form>
 
     <div class="panel">
@@ -40,6 +55,16 @@
             <div>
               <strong>{{ client.name }}</strong>
               <span>{{ client.email }}</span>
+            </div>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn btn-danger"
+                (click)="remove(client)"
+                [disabled]="loading()"
+              >
+                Excluir
+              </button>
             </div>
           </li>
         } @empty {

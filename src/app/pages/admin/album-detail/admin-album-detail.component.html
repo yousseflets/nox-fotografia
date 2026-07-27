@@ -1,10 +1,20 @@
 <section class="page">
-  <a class="back" routerLink="/admin/albuns">← Voltar</a>
+  <a class="back" routerLink="/admin/albuns">? Voltar</a>
 
   @if (album$ | async; as album) {
-    <header>
-      <h1>{{ album.title }}</h1>
-      <p>Cliente: {{ album.clientName || album.clientId }}</p>
+    <header class="page-head">
+      <div>
+        <h1>{{ album.title }}</h1>
+        <p>Cliente: {{ album.clientName || album.clientId }}</p>
+      </div>
+      <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="deleting() || uploading()"
+        (click)="deleteAlbum(album.title)"
+      >
+        {{ deleting() ? 'Excluindo...' : 'Excluir álbum' }}
+      </button>
     </header>
 
     <div class="panel upload">
@@ -17,7 +27,7 @@
           accept="image/*"
           multiple
           hidden
-          [disabled]="uploading()"
+          [disabled]="uploading() || deleting()"
           (change)="onFilesSelected($event, album.clientId)"
         />
       </label>

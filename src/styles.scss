@@ -123,6 +123,25 @@ p {
   padding-inline: 0;
 }
 
+.btn-danger {
+  background: transparent;
+  border-color: #c07070;
+  color: #e8a0a0;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.62rem;
+}
+
+.btn-danger:hover {
+  background: rgba(192, 112, 112, 0.12);
+}
+
+.btn-sm {
+  min-height: 2.25rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.62rem;
+}
+
 .section {
   padding: clamp(4.5rem, 9vw, 7.5rem) 0;
   position: relative;
