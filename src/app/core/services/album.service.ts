@@ -2,35 +2,79 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   doc,
-  docData,
   addDoc,
   updateDoc,
   deleteDoc,
   query,
   where,
   orderBy,
+  onSnapshot,
+  QueryConstraint,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Album } from '../models/album.model';
 import { AppUser } from '../models/user.model';
+
+function collection$<T extends object>(
+  firestore: Firestore,
+  path: string,
+  constraints: QueryConstraint[],
+  idField: string
+): Observable<T[]> {
+  const q = query(collection(firestore, path), ...constraints);
+  return new Observable<T[]>((subscriber) => {
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const items = snap.docs.map(
+          (d) => ({ [idField]: d.id, ...d.data() }) as T
+        );
+        subscriber.next(items);
+      },
+      (err) => subscriber.error(err)
+    );
+    return () => unsub();
+  });
+}
+
+function doc$<T extends object>(
+  firestore: Firestore,
+  path: string,
+  idField = 'id'
+): Observable<T | undefined> {
+  const ref = doc(firestore, path);
+  return new Observable<T | undefined>((subscriber) => {
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        if (!snap.exists()) {
+          subscriber.next(undefined);
+          return;
+        }
+        subscriber.next({ [idField]: snap.id, ...snap.data() } as T);
+      },
+      (err) => subscriber.error(err)
+    );
+    return () => unsub();
+  });
+}
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private readonly firestore = inject(Firestore);
 
   getClients(): Observable<AppUser[]> {
-    const q = query(
-      collection(this.firestore, 'users'),
-      where('role', '==', 'client'),
-      orderBy('name')
+    return collection$<AppUser>(
+      this.firestore,
+      'users',
+      [where('role', '==', 'client'), orderBy('name')],
+      'uid'
     );
-    return collectionData(q, { idField: 'uid' }) as Observable<AppUser[]>;
   }
 
   getUser(uid: string): Observable<AppUser | undefined> {
-    return docData(doc(this.firestore, `users/${uid}`)) as Observable<AppUser | undefined>;
+    return doc$<AppUser>(this.firestore, `users/${uid}`, 'uid');
   }
 }
 
@@ -39,23 +83,25 @@ export class AlbumService {
   private readonly firestore = inject(Firestore);
 
   getAll(): Observable<Album[]> {
-    const q = query(collection(this.firestore, 'albums'), orderBy('createdAt', 'desc'));
-    return collectionData(q, { idField: 'id' }) as Observable<Album[]>;
+    return collection$<Album>(
+      this.firestore,
+      'albums',
+      [orderBy('createdAt', 'desc')],
+      'id'
+    );
   }
 
   getByClient(clientId: string): Observable<Album[]> {
-    const q = query(
-      collection(this.firestore, 'albums'),
-      where('clientId', '==', clientId),
-      orderBy('createdAt', 'desc')
+    return collection$<Album>(
+      this.firestore,
+      'albums',
+      [where('clientId', '==', clientId), orderBy('createdAt', 'desc')],
+      'id'
     );
-    return collectionData(q, { idField: 'id' }) as Observable<Album[]>;
   }
 
   getById(albumId: string): Observable<Album | undefined> {
-    return docData(doc(this.firestore, `albums/${albumId}`), { idField: 'id' }) as Observable<
-      Album | undefined
-    >;
+    return doc$<Album>(this.firestore, `albums/${albumId}`);
   }
 
   async create(album: Omit<Album, 'id'>): Promise<string> {

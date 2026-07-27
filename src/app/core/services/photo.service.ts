@@ -2,13 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
   doc,
   addDoc,
   deleteDoc,
   query,
   where,
   orderBy,
+  onSnapshot,
 } from '@angular/fire/firestore';
 import {
   Storage,
@@ -31,7 +31,20 @@ export class PhotoService {
       where('albumId', '==', albumId),
       orderBy('createdAt', 'desc')
     );
-    return collectionData(q, { idField: 'id' }) as Observable<Photo[]>;
+
+    return new Observable<Photo[]>((subscriber) => {
+      const unsub = onSnapshot(
+        q,
+        (snap) => {
+          const items = snap.docs.map(
+            (d) => ({ id: d.id, ...d.data() }) as Photo
+          );
+          subscriber.next(items);
+        },
+        (err) => subscriber.error(err)
+      );
+      return () => unsub();
+    });
   }
 
   async uploadPhoto(
@@ -76,7 +89,7 @@ export class PhotoService {
       try {
         await deleteObject(ref(this.storage, photo.storagePath));
       } catch {
-        // arquivo pode j√° ter sido removido
+        // arquivo pode j· ter sido removido
       }
     }
     if (photo.id) {

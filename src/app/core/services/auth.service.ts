@@ -11,14 +11,32 @@ import {
 import {
   Firestore,
   doc,
-  docData,
+  onSnapshot,
   setDoc,
 } from '@angular/fire/firestore';
 import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword as createSecondary } from 'firebase/auth';
-import { Observable, of, switchMap, map, shareReplay } from 'rxjs';
+import { Observable, of, switchMap, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppUser, UserRole } from '../models/user.model';
+
+function userDoc$(firestore: Firestore, uid: string): Observable<AppUser | null> {
+  const ref = doc(firestore, `users/${uid}`);
+  return new Observable<AppUser | null>((subscriber) => {
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        if (!snap.exists()) {
+          subscriber.next(null);
+          return;
+        }
+        subscriber.next({ uid: snap.id, ...snap.data() } as AppUser);
+      },
+      (err) => subscriber.error(err)
+    );
+    return () => unsub();
+  });
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -30,9 +48,7 @@ export class AuthService {
   readonly user$: Observable<AppUser | null> = this.firebaseUser$.pipe(
     switchMap((user) => {
       if (!user) return of(null);
-      return docData(doc(this.firestore, `users/${user.uid}`)).pipe(
-        map((data) => (data ? ({ uid: user.uid, ...data } as AppUser) : null))
-      );
+      return userDoc$(this.firestore, user.uid);
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );
@@ -48,7 +64,7 @@ export class AuthService {
     return credential;
   }
 
-  /** Cria cliente sem deslogar o admin (app Auth secund√°rio). */
+  /** Cria cliente sem deslogar o admin (app Auth secund·rio). */
   async createClientAccount(name: string, email: string, password: string): Promise<string> {
     let secondaryApp: FirebaseApp | null = null;
     try {
