@@ -4,6 +4,7 @@ import { FooterComponent } from '../../shared/components/footer/footer.component
 import { HeroComponent } from './sections/hero/hero.component';
 import { AboutComponent } from './sections/about/about.component';
 import { PortfolioComponent } from './sections/portfolio/portfolio.component';
+import { GalleryCarouselComponent } from './sections/gallery-carousel/gallery-carousel.component';
 import { FeaturesComponent } from './sections/features/features.component';
 import { TestimonialsComponent } from './sections/testimonials/testimonials.component';
 
@@ -16,6 +17,7 @@ import { TestimonialsComponent } from './sections/testimonials/testimonials.comp
     HeroComponent,
     AboutComponent,
     PortfolioComponent,
+    GalleryCarouselComponent,
     FeaturesComponent,
     TestimonialsComponent,
   ],
@@ -25,6 +27,7 @@ import { TestimonialsComponent } from './sections/testimonials/testimonials.comp
       <app-hero />
       <app-about />
       <app-portfolio />
+      <app-gallery-carousel />
       <app-features />
       <app-testimonials />
     </main>

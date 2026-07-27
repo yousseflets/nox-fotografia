@@ -1,0 +1,52 @@
+<section
+  class="gallery section"
+  (mouseenter)="stop()"
+  (mouseleave)="start()"
+>
+  <div class="container">
+    <header class="gallery__head">
+      <p class="section-kicker">Galeria</p>
+      <h2 class="section-title">Momentos capturados pela NOX</h2>
+    </header>
+
+    <div class="gallery__stage">
+      <button
+        class="gallery__nav gallery__nav--prev"
+        type="button"
+        aria-label="Anterior"
+        (click)="prev(); start()"
+      >
+        ‹
+      </button>
+
+      <div class="gallery__track">
+        @for (image of visibleImages(); track image.src + $index) {
+          <figure class="gallery__card">
+            <img [src]="image.src" [alt]="image.alt" loading="lazy" />
+          </figure>
+        }
+      </div>
+
+      <button
+        class="gallery__nav gallery__nav--next"
+        type="button"
+        aria-label="Próximo"
+        (click)="next(); start()"
+      >
+        ›
+      </button>
+    </div>
+
+    <div class="gallery__dots" role="tablist" aria-label="Slides da galeria">
+      @for (image of images; track image.src; let i = $index) {
+        <button
+          type="button"
+          class="gallery__dot"
+          [class.gallery__dot--active]="index() === i"
+          [attr.aria-label]="'Ir para foto ' + (i + 1)"
+          (click)="goTo(i)"
+        ></button>
+      }
+    </div>
+  </div>
+</section>
