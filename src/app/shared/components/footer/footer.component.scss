@@ -74,18 +74,44 @@
   font-size: 0.9rem;
 }
 
-.footer__copy {
-  text-align: center;
-  padding: 1.25rem;
+.footer__bar {
   border-top: 1px solid rgba(212, 175, 55, 0.15);
+  padding: 1.1rem 0;
+}
+
+.footer__bar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
   color: var(--nox-muted);
   font-size: 0.66rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.footer__bar-inner p {
+  margin: 0;
+}
+
+.footer__bar-inner a {
+  color: var(--nox-gold);
+  margin-left: 0.25rem;
+  transition: color 0.2s ease;
+}
+
+.footer__bar-inner a:hover {
+  color: var(--nox-gold-bright);
 }
 
 @media (max-width: 800px) {
   .footer__contacts {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .footer__bar-inner {
+    flex-direction: column;
+    text-align: center;
   }
 }

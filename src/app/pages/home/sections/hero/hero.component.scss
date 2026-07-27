@@ -75,11 +75,14 @@
 }
 
 .hero__logo {
-  width: min(30rem, 86vw);
+  width: min(26rem, 78vw);
   height: auto;
   margin-inline: auto;
-  animation: moon-glow 5s ease-in-out infinite;
-  mix-blend-mode: screen;
+  display: block;
+  filter: contrast(1.1) brightness(1.06) saturate(1.05);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .hero__tagline {

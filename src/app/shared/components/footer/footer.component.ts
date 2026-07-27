@@ -7,10 +7,12 @@ import { Component } from '@angular/core';
   styleUrl: './footer.component.scss',
 })
 export class FooterComponent {
-  readonly year = new Date().getFullYear();
-
   readonly contacts = [
-    { label: 'Instagram', value: '@nox.fotografia', href: 'https://instagram.com' },
+    {
+      label: 'Instagram',
+      value: '@nox.fotografia',
+      href: 'https://www.instagram.com/nox.fotografia_?igsh=MW8zd3A5cnA5b2l5dQ==',
+    },
     { label: 'WhatsApp', value: '(11) 98927-3898', href: 'https://wa.me/5511989273898' },
     { label: 'E-mail', value: 'thaisroza@gmail.com', href: 'mailto:thaisroza@gmail.com' },
     { label: 'Localização', value: 'Mogi das Cruzes - SP', href: '#' },
