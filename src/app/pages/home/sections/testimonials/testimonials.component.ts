@@ -18,7 +18,7 @@ export class TestimonialsComponent {
     {
       name: 'Nicole Federici',
       quote:
-        'Estou encantada com cada foto, Meu Deus como ele se divertiu no aniversário, olhando as fotos consegui perceber ainda mais.',
+        'Estou encantada com cada foto. Meu Deus como ele se divertiu no aniversário, olhando as fotos consegui perceber ainda mais.',
     },
     {
       name: 'Emily Costa',
