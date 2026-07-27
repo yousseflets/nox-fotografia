@@ -39,7 +39,8 @@ export class ClientAlbumDetailComponent {
 
       for (let index = 0; index < photos.length; index++) {
         const photo = photos[index];
-        const blob = await this.photos.getPhotoBlob(photo);
+        // Bytes originais do Storage — sem recomprimir a imagem.
+        const bytes = await this.photos.getPhotoBytes(photo);
         let name = photo.filename || `foto-${index + 1}.jpg`;
         if (usedNames.has(name)) {
           const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
@@ -47,13 +48,16 @@ export class ClientAlbumDetailComponent {
           name = `${base}-${index + 1}${ext}`;
         }
         usedNames.add(name);
-        folder?.file(name, blob);
+        folder?.file(name, bytes, {
+          binary: true,
+          compression: 'STORE',
+        });
       }
 
+      // STORE: empacota os arquivos como estão, sem recompressão (JPEG/PNG intactos).
       const content = await zip.generateAsync({
         type: 'blob',
-        compression: 'DEFLATE',
-        compressionOptions: { level: 6 },
+        compression: 'STORE',
       });
       saveAs(content, `${folderName}.zip`);
     } catch (err) {

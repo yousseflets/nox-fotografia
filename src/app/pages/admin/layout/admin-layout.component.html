@@ -1,7 +1,7 @@
 <div class="shell">
   <aside class="sidebar">
     <a class="sidebar__brand" routerLink="/">
-      <img src="/logo-nox.png" alt="NOX Fotografia" />
+      <img src="/nox-logo.png" alt="NOX Fotografia" />
       <span>Admin</span>
     </a>
     <nav>
@@ -9,7 +9,7 @@
         Dashboard
       </a>
       <a routerLink="/admin/clientes" routerLinkActive="active">Clientes</a>
-      <a routerLink="/admin/albuns" routerLinkActive="active">Álbuns</a>
+      <a routerLink="/admin/albuns" routerLinkActive="active">álbum</a>
     </nav>
     <div class="sidebar__footer">
       @if (auth.user$ | async; as user) {

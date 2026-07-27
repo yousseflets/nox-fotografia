@@ -17,6 +17,7 @@ import {
   getDownloadURL,
   deleteObject,
   getBlob,
+  getBytes,
 } from '@angular/fire/storage';
 import { Observable, catchError, map, of } from 'rxjs';
 import { Photo } from '../models/photo.model';
@@ -27,7 +28,7 @@ export class PhotoService {
   private readonly storage = inject(Storage);
 
   getByAlbum(albumId: string): Observable<Photo[]> {
-    // Sem orderBy no Firestore para não exigir índice composto (albumId + createdAt).
+    // Sem orderBy no Firestore para nao exigir indice composto (albumId + createdAt).
     const q = query(
       collection(this.firestore, 'photos'),
       where('albumId', '==', albumId)
@@ -56,6 +57,19 @@ export class PhotoService {
         return of([]);
       })
     );
+  }
+
+  /** Baixa o arquivo original via SDK (sem reprocessar a imagem). */
+  async getPhotoBytes(photo: Photo): Promise<Uint8Array> {
+    if (photo.storagePath) {
+      const buffer = await getBytes(ref(this.storage, photo.storagePath));
+      return new Uint8Array(buffer);
+    }
+    const response = await fetch(photo.url);
+    if (!response.ok) {
+      throw new Error(`Falha ao baixar foto (${response.status})`);
+    }
+    return new Uint8Array(await response.arrayBuffer());
   }
 
   /** Baixa o arquivo via SDK (precisa de CORS no bucket). */
@@ -112,7 +126,7 @@ export class PhotoService {
       try {
         await deleteObject(ref(this.storage, photo.storagePath));
       } catch {
-        // arquivo pode já ter sido removido
+        // arquivo pode jÃ¡ ter sido removido
       }
     }
     if (photo.id) {
