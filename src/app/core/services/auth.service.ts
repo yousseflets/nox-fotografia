@@ -16,7 +16,7 @@ import {
 } from '@angular/fire/firestore';
 import { initializeApp, deleteApp, FirebaseApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword as createSecondary } from 'firebase/auth';
-import { Observable, of, switchMap, shareReplay } from 'rxjs';
+import { Observable, filter, firstValueFrom, of, shareReplay, switchMap, take } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppUser, UserRole } from '../models/user.model';
 
@@ -89,7 +89,14 @@ export class AuthService {
     return setDoc(doc(this.firestore, `users/${uid}`), profile);
   }
 
-  logout() {
-    return signOut(this.auth);
+  async logout(): Promise<void> {
+    await signOut(this.auth);
+    // Espera o Auth emitir null antes de navegar — evita precisar clicar em Sair 2 vezes.
+    await firstValueFrom(
+      this.firebaseUser$.pipe(
+        filter((user) => user === null),
+        take(1)
+      )
+    );
   }
 }
