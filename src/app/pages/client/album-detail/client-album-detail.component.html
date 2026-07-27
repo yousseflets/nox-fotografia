@@ -14,23 +14,32 @@
         <button
           class="btn btn-primary"
           type="button"
-          [disabled]="!photos.length || zipping()"
+          [disabled]="!photos.length || zipping() || downloadingId()"
           (click)="downloadAll(photos, album.title)"
         >
-          {{ zipping() ? 'Gerando ZIP...' : 'Baixar todas' }}
+          {{ zipping() ? 'Gerando ZIP...' : 'Baixar todas (ZIP)' }}
         </button>
       }
     </header>
 
     <div class="gallery">
-      @for (photo of photos$ | async; track photo.id) {
+      @for (photo of photos$ | async; track photo.id; let i = $index) {
         <figure>
           <img [src]="photo.url" [alt]="photo.filename" loading="lazy" />
           <figcaption>
             <span>{{ photo.filename }}</span>
-            <a class="btn btn-ghost" [href]="photo.url" [download]="photo.filename" target="_blank" rel="noopener">
-              Baixar
-            </a>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="zipping() || downloadingId() === (photo.id || photo.storagePath)"
+              (click)="downloadOne(photo, i)"
+            >
+              {{
+                downloadingId() === (photo.id || photo.storagePath)
+                  ? 'Baixando...'
+                  : 'Baixar'
+              }}
+            </button>
           </figcaption>
         </figure>
       } @empty {
