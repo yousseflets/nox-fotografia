@@ -1,4 +1,6 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, signal } from '@angular/core';
+
+type GalleryImage = { src: string; alt: string };
 
 @Component({
   selector: 'app-gallery-carousel',
@@ -8,9 +10,10 @@ import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 })
 export class GalleryCarouselComponent implements OnInit, OnDestroy {
   readonly index = signal(0);
+  readonly preview = signal<GalleryImage | null>(null);
   private timer: ReturnType<typeof setInterval> | null = null;
 
-  readonly images = [
+  readonly images: GalleryImage[] = [
     { src: '/carrossel-1.jpeg', alt: 'Ensaio NOX Fotografia 1' },
     { src: '/carrossel-2.jpeg', alt: 'Ensaio NOX Fotografia 2' },
     { src: '/carrossel-3.jpeg', alt: 'Ensaio NOX Fotografia 3' },
@@ -28,6 +31,7 @@ export class GalleryCarouselComponent implements OnInit, OnDestroy {
   }
 
   start() {
+    if (this.preview()) return;
     this.stop();
     this.timer = setInterval(() => this.next(), 4000);
   }
@@ -52,7 +56,21 @@ export class GalleryCarouselComponent implements OnInit, OnDestroy {
     this.start();
   }
 
-  /** Retorna 3 fotos consecutivas a partir do índice atual (loop). */
+  openPreview(image: GalleryImage) {
+    this.preview.set(image);
+    this.stop();
+  }
+
+  closePreview() {
+    this.preview.set(null);
+    this.start();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.preview()) this.closePreview();
+  }
+
   visibleImages() {
     const total = this.images.length;
     const start = this.index();

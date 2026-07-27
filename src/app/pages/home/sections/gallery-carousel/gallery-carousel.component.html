@@ -21,9 +21,14 @@
 
       <div class="gallery__track">
         @for (image of visibleImages(); track image.src + $index) {
-          <figure class="gallery__card">
+          <button
+            type="button"
+            class="gallery__card"
+            (click)="openPreview(image)"
+            [attr.aria-label]="'Ampliar ' + image.alt"
+          >
             <img [src]="image.src" [alt]="image.alt" loading="lazy" />
-          </figure>
+          </button>
         }
       </div>
 
@@ -49,4 +54,17 @@
       }
     </div>
   </div>
+
+  @if (preview(); as image) {
+    <div class="gallery__lightbox" (click)="closePreview()" role="dialog" aria-modal="true">
+      <button class="gallery__lightbox-close" type="button" aria-label="Fechar" (click)="closePreview()">
+        ×
+      </button>
+      <img
+        [src]="image.src"
+        [alt]="image.alt"
+        (click)="$event.stopPropagation()"
+      />
+    </div>
+  }
 </section>

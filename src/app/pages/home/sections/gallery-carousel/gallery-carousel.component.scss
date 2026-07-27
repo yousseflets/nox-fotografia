@@ -29,6 +29,9 @@
   padding: 0.75rem;
   border: 1px solid var(--nox-border);
   background: #0a0a0a;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
   animation: fade-up 0.45s ease;
 }
 
@@ -38,6 +41,21 @@
   max-height: 20rem;
   object-fit: contain;
   object-position: center;
+  transition: transform 0.35s ease;
+}
+
+.gallery__card:hover,
+.gallery__card:focus-visible {
+  border-color: var(--nox-gold);
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  outline: none;
+  z-index: 1;
+}
+
+.gallery__card:hover img,
+.gallery__card:focus-visible img {
+  transform: scale(1.06);
 }
 
 .gallery__nav {
@@ -78,6 +96,41 @@
   background: var(--nox-gold);
 }
 
+.gallery__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.9);
+  animation: fade-up 0.25s ease;
+}
+
+.gallery__lightbox img {
+  max-width: min(92vw, 980px);
+  max-height: 88vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid var(--nox-border);
+}
+
+.gallery__lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--nox-gold);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--nox-gold);
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 @media (max-width: 900px) {
   .gallery__track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -104,5 +157,10 @@
 
   .gallery__card img {
     max-height: 16rem;
+  }
+
+  .gallery__card:active {
+    border-color: var(--nox-gold);
+    transform: translateY(-2px) scale(1.02);
   }
 }
