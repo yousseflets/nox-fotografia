@@ -14,7 +14,7 @@ export class FooterComponent {
       href: 'https://www.instagram.com/nox.fotografia_?igsh=MW8zd3A5cnA5b2l5dQ==',
     },
     { label: 'WhatsApp', value: '(11) 98927-3898', href: 'https://wa.me/5511989273898' },
-    { label: 'E-mail', value: 'thaisroza@gmail.com', href: 'mailto:thaisroza@gmail.com' },
+    { label: 'E-mail', value: 'thataroza@gmail.com', href: 'mailto:thataroza@gmail.com' },
     { label: 'Localização', value: 'Mogi das Cruzes - SP', href: '#' },
   ];
 }

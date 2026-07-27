@@ -1,5 +1,6 @@
 export const environment = {
   production: true,
+  siteUrl: 'https://nox-fotografia.vercel.app',
   firebase: {
     apiKey: 'AIzaSyCGNfuitrjjJz_MvcWRqq0g6vzjtu8qrb0',
     authDomain: 'nox-fotografia.firebaseapp.com',
