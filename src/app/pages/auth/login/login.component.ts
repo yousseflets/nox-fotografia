@@ -20,16 +20,23 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly showPassword = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
+  togglePassword() {
+    this.showPassword.update((v) => !v);
+  }
+
   async submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set('Preencha e-mail e senha válidos (mínimo 6 caracteres).');
+      this.error.set(
+        'Preencha e-mail e senha válidos (mínimo 6 caracteres).'
+      );
       return;
     }
 

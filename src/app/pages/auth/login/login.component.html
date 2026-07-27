@@ -17,7 +17,41 @@
       </div>
       <div class="form-field">
         <label for="password">Senha</label>
-        <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+        <div class="password-field">
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            @if (showPassword()) {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 6c-5 0-9.3 3.1-11 7.5C2.7 17.9 7 21 12 21s9.3-3.1 11-7.5C21.3 9.1 17 6 12 6zm0 12.5c-3.6 0-6.8-2.1-8.4-5.5C5.2 9.6 8.4 7.5 12 7.5s6.8 2.1 8.4 5.5c-1.6 3.4-4.8 5.5-8.4 5.5zM12 9a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 7.2a2.7 2.7 0 110-5.4 2.7 2.7 0 010 5.4z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M3.3 3.3L20.7 20.7l-1.4 1.4L1.9 4.7z"
+                />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 6c-5 0-9.3 3.1-11 7.5C2.7 17.9 7 21 12 21s9.3-3.1 11-7.5C21.3 9.1 17 6 12 6zm0 12.5c-3.6 0-6.8-2.1-8.4-5.5C5.2 9.6 8.4 7.5 12 7.5s6.8 2.1 8.4 5.5c-1.6 3.4-4.8 5.5-8.4 5.5zM12 9a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 7.2a2.7 2.7 0 110-5.4 2.7 2.7 0 010 5.4z"
+                />
+              </svg>
+            }
+          </button>
+        </div>
       </div>
 
       @if (error()) {

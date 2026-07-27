@@ -79,3 +79,39 @@ h1 {
   color: var(--nox-gold);
   margin-left: 0.25rem;
 }
+
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--nox-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.password-toggle:hover,
+.password-toggle[aria-pressed='true'] {
+  color: var(--nox-gold);
+}
+
+.password-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
