@@ -49,6 +49,13 @@ export const routes: Routes = [
             (m) => m.AdminAlbumDetailComponent
           ),
       },
+      {
+        path: 'depoimentos',
+        loadComponent: () =>
+          import('./pages/admin/testimonials/admin-testimonials.component').then(
+            (m) => m.AdminTestimonialsComponent
+          ),
+      },
     ],
   },
   {

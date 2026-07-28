@@ -1,0 +1,83 @@
+<section class="page">
+  <header>
+    <h1>Depoimentos</h1>
+    <p>Cadastre depoimentos que aparecem na página inicial.</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+      <h2>{{ editingId() ? 'Editar depoimento' : 'Novo depoimento' }}</h2>
+      <div class="form-field">
+        <label for="name">Nome</label>
+        <input id="name" formControlName="name" placeholder="Nome do cliente" />
+      </div>
+      <div class="form-field">
+        <label for="quote">Depoimento</label>
+        <textarea
+          id="quote"
+          rows="5"
+          formControlName="quote"
+          placeholder="Texto do depoimento"
+        ></textarea>
+      </div>
+
+      @if (message()) {
+        <p class="ok">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="err">{{ error() }}</p>
+      }
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" [disabled]="loading()">
+          {{
+            loading()
+              ? 'Salvando...'
+              : editingId()
+                ? 'Salvar alterações'
+                : 'Cadastrar depoimento'
+          }}
+        </button>
+        @if (editingId()) {
+          <button class="btn btn-outline btn-sm" type="button" (click)="cancelEdit()">
+            Cancelar
+          </button>
+        }
+      </div>
+    </form>
+
+    <div class="panel">
+      <h2>Lista</h2>
+      <ul>
+        @for (item of list$ | async; track item.id) {
+          <li>
+            <div class="item-text">
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.quote }}</span>
+            </div>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                [disabled]="loading()"
+                (click)="startEdit(item)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                [disabled]="loading()"
+                (click)="remove(item)"
+              >
+                Excluir
+              </button>
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">Nenhum depoimento cadastrado.</li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>

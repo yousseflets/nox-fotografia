@@ -9,7 +9,7 @@
       <button class="nav-btn" type="button" aria-label="Anterior" (click)="prev()">‹</button>
 
       <div class="testimonials__grid">
-        @for (item of visibleItems(); track item.name) {
+        @for (item of visibleItems(); track item.id || item.name + item.quote) {
           <article class="quote">
             <span class="quote__mark" aria-hidden="true">“</span>
             <p>{{ item.quote }}</p>
