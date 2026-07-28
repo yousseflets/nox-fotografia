@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -13,6 +14,25 @@ import { AuthService } from '../../../core/services/auth.service';
 export class AdminLayoutComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+
+  readonly configOpen = signal(this.isConfigSection());
+
+  constructor() {
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        if (this.isConfigSection()) this.configOpen.set(true);
+      });
+  }
+
+  isConfigSection() {
+    const url = this.router.url;
+    return url.startsWith('/admin/depoimentos') || url.startsWith('/admin/galeria');
+  }
+
+  toggleConfig() {
+    this.configOpen.update((open) => !open);
+  }
 
   async logout() {
     await this.auth.logout();

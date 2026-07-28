@@ -18,5 +18,10 @@ service firebase.storage {
       allow read: if isAdmin() || ownsClient(clientId);
       allow write: if isAdmin();
     }
+
+    match /gallery/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

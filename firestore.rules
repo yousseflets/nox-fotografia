@@ -50,5 +50,10 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }

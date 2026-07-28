@@ -1,0 +1,60 @@
+<section class="page">
+  <header>
+    <h1>Galeria</h1>
+    <p>Envie fotos que aparecem no carrossel da página inicial.</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" [formGroup]="form" (submit)="$event.preventDefault()">
+      <h2>Nova foto</h2>
+      <div class="form-field">
+        <label for="alt">Descrição (opcional)</label>
+        <input id="alt" formControlName="alt" placeholder="Ensaio gestante, casamento..." />
+      </div>
+
+      <label class="btn btn-primary file-btn">
+        {{ uploading() ? 'Enviando...' : 'Selecionar fotos' }}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          [disabled]="uploading()"
+          (change)="onFilesSelected($event)"
+        />
+      </label>
+
+      @if (uploading()) {
+        <div class="progress">
+          <span [style.width.%]="progress()"></span>
+        </div>
+      }
+
+      @if (message()) {
+        <p class="ok">{{ message() }}</p>
+      }
+      @if (error()) {
+        <p class="err">{{ error() }}</p>
+      }
+    </form>
+
+    <div class="panel">
+      <h2>Fotos da home</h2>
+      <div class="thumbs">
+        @for (image of list$ | async; track image.id) {
+          <figure>
+            <img [src]="image.url" [alt]="image.alt" />
+            <figcaption>
+              <span>{{ image.alt }}</span>
+              <button type="button" class="btn btn-danger" (click)="remove(image)">
+                Excluir
+              </button>
+            </figcaption>
+          </figure>
+        } @empty {
+          <p class="empty">Nenhuma foto cadastrada ainda.</p>
+        }
+      </div>
+    </div>
+  </div>
+</section>

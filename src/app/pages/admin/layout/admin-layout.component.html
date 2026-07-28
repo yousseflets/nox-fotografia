@@ -9,8 +9,30 @@
         Dashboard
       </a>
       <a routerLink="/admin/clientes" routerLinkActive="active">Clientes</a>
-      <a routerLink="/admin/albuns" routerLinkActive="active">álbum</a>
-      <a routerLink="/admin/testimonials" routerLinkActive="active">Depoimentos</a>
+      <a routerLink="/admin/albuns" routerLinkActive="active">Álbuns</a>
+
+      <div
+        class="nav-group"
+        [class.nav-group--open]="configOpen()"
+        [class.nav-group--active]="isConfigSection()"
+      >
+        <button
+          type="button"
+          class="nav-group__toggle"
+          (click)="toggleConfig()"
+          [attr.aria-expanded]="configOpen()"
+        >
+          <span>Configuração</span>
+          <span class="nav-group__chevron" aria-hidden="true">›</span>
+        </button>
+
+        @if (configOpen()) {
+          <div class="nav-group__items">
+            <a routerLink="/admin/depoimentos" routerLinkActive="active">Depoimentos</a>
+            <a routerLink="/admin/galeria" routerLinkActive="active">Galeria</a>
+          </div>
+        }
+      </div>
     </nav>
     <div class="sidebar__footer">
       @if (auth.user$ | async; as user) {

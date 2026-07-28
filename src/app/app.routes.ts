@@ -56,6 +56,13 @@ export const routes: Routes = [
             (m) => m.AdminTestimonialsComponent
           ),
       },
+      {
+        path: 'galeria',
+        loadComponent: () =>
+          import('./pages/admin/gallery/admin-gallery.component').then(
+            (m) => m.AdminGalleryComponent
+          ),
+      },
     ],
   },
   {
