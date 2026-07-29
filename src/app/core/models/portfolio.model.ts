@@ -4,7 +4,8 @@ export type PortfolioIcon =
   | 'family'
   | 'maternity'
   | 'events'
-  | 'portrait';
+  | 'portrait'
+  | 'birthday';
 
 export interface PortfolioCategory {
   id?: string;
@@ -87,6 +88,7 @@ export const PORTFOLIO_ICONS: PortfolioIcon[] = [
   'maternity',
   'events',
   'portrait',
+  'birthday',
 ];
 
 export const PORTFOLIO_ICON_OPTIONS: Array<{ value: PortfolioIcon; label: string }> = [
@@ -96,6 +98,7 @@ export const PORTFOLIO_ICON_OPTIONS: Array<{ value: PortfolioIcon; label: string
   { value: 'maternity', label: 'Gestante' },
   { value: 'events', label: 'Eventos' },
   { value: 'portrait', label: 'Retrato' },
+  { value: 'birthday', label: 'Aniversário' },
 ];
 
 export function slugify(value: string): string {
