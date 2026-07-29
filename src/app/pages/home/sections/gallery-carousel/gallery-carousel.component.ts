@@ -27,6 +27,9 @@ export class GalleryCarouselComponent implements OnDestroy {
 
   readonly index = signal(0);
   readonly preview = signal<GalleryImage | null>(null);
+  readonly viewportWidth = signal(
+    typeof window !== 'undefined' ? window.innerWidth : 1200
+  );
 
   readonly images = toSignal(
     this.gallery.getAll().pipe(
@@ -106,12 +109,25 @@ export class GalleryCarouselComponent implements OnDestroy {
     if (this.preview()) this.closePreview();
   }
 
+  @HostListener('window:resize')
+  onResize() {
+    this.viewportWidth.set(window.innerWidth);
+  }
+
+  private visibleCount() {
+    const width = this.viewportWidth();
+    if (width <= 600) return 1;
+    if (width <= 900) return 2;
+    return 3;
+  }
+
   visibleImages() {
     const list = this.images();
     const total = list.length;
     if (!total) return [];
-    if (total <= 3) return list;
+    const count = Math.min(this.visibleCount(), total);
+    if (total <= count) return list;
     const start = this.index();
-    return [0, 1, 2].map((offset) => list[(start + offset) % total]);
+    return Array.from({ length: count }, (_, offset) => list[(start + offset) % total]);
   }
 }
