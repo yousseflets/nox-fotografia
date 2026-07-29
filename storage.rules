@@ -23,5 +23,10 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    match /portfolio/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

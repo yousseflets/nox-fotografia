@@ -55,5 +55,15 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    match /portfolioCategories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /portfolioPhotos/{photoId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }

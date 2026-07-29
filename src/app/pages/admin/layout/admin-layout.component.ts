@@ -27,7 +27,12 @@ export class AdminLayoutComponent {
 
   isConfigSection() {
     const url = this.router.url;
-    return url.startsWith('/admin/depoimentos') || url.startsWith('/admin/galeria');
+    return (
+      url.startsWith('/admin/depoimentos') ||
+      url.startsWith('/admin/galeria') ||
+      url.startsWith('/admin/portfolio-categorias') ||
+      url.startsWith('/admin/portfolio-fotos')
+    );
   }
 
   toggleConfig() {

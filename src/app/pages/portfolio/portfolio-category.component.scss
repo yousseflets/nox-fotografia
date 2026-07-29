@@ -1,0 +1,88 @@
+
+.page {
+  min-height: 70vh;
+  padding: 7rem 0 4rem;
+  background: #000;
+}
+
+.back {
+  color: var(--nox-gold);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+header {
+  margin: 1.5rem 0 2rem;
+  text-align: center;
+}
+
+h1 {
+  color: var(--nox-gold);
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.thumb {
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: #0a0a0a;
+  cursor: pointer;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.thumb:hover img {
+  transform: scale(1.04);
+}
+
+.empty {
+  color: var(--nox-muted);
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.lightbox img {
+  max-width: min(92vw, 980px);
+  max-height: 88vh;
+  object-fit: contain;
+  border: 1px solid var(--nox-border);
+}
+
+.lightbox__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--nox-gold);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--nox-gold);
+  font-size: 1.75rem;
+  cursor: pointer;
+}

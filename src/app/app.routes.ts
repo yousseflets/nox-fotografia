@@ -7,6 +7,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home/home.component').then((m) => m.HomeComponent),
   },
   {
+    path: 'portfolio/:slug',
+    loadComponent: () =>
+      import('./pages/portfolio/portfolio-category.component').then(
+        (m) => m.PortfolioCategoryComponent
+      ),
+  },
+  {
     path: 'login',
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/auth/login/login.component').then((m) => m.LoginComponent),
@@ -61,6 +68,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/admin/gallery/admin-gallery.component').then(
             (m) => m.AdminGalleryComponent
+          ),
+      },
+      {
+        path: 'portfolio-categorias',
+        loadComponent: () =>
+          import('./pages/admin/portfolio-categories/admin-portfolio-categories.component').then(
+            (m) => m.AdminPortfolioCategoriesComponent
+          ),
+      },
+      {
+        path: 'portfolio-fotos',
+        loadComponent: () =>
+          import('./pages/admin/portfolio-photos/admin-portfolio-photos.component').then(
+            (m) => m.AdminPortfolioPhotosComponent
           ),
       },
     ],

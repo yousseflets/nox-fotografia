@@ -1,0 +1,22 @@
+
+.page header { margin-bottom: 1.25rem; }
+.page h1 { color: var(--nox-gold); font-size: 2.1rem; }
+.page header p, .empty, li span { color: var(--nox-muted); }
+.top-actions { margin-bottom: 1.25rem; }
+.grid { display: grid; grid-template-columns: minmax(0, 24rem) 1fr; gap: 1.25rem; }
+.panel h2 { color: var(--nox-gold); margin-bottom: 1rem; font-size: 1.25rem; }
+ul { list-style: none; margin: 0; padding: 0; }
+li {
+  display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+  padding: 0.9rem 0; border-bottom: 1px solid rgba(201, 168, 76, 0.15);
+}
+.item { display: flex; gap: 0.75rem; align-items: center; min-width: 0; }
+.item img { width: 3.2rem; height: 3.2rem; object-fit: cover; border: 1px solid var(--nox-border); }
+.item strong { display: block; color: var(--nox-cream); }
+.row-actions, .form-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ok { color: #9fd4a5; margin: 0.75rem 0; }
+.err { color: #e8a0a0; margin: 0.75rem 0; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  li { flex-direction: column; align-items: flex-start; }
+}

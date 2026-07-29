@@ -1,0 +1,35 @@
+<app-navbar />
+
+<main class="page">
+  <div class="container">
+    <a class="back" routerLink="/" fragment="portfolio">← Voltar ao portfólio</a>
+
+    @if (category$ | async; as category) {
+      <header>
+        <p class="section-kicker">Portfólio</p>
+        <h1>{{ category.title }}</h1>
+      </header>
+
+      <div class="grid">
+        @for (photo of photos$ | async; track photo.id) {
+          <button type="button" class="thumb" (click)="openPreview(photo)">
+            <img [src]="photo.url" [alt]="photo.alt" loading="lazy" />
+          </button>
+        } @empty {
+          <p class="empty">Em breve novas fotos desta categoria.</p>
+        }
+      </div>
+    } @else {
+      <p class="empty">Categoria não encontrada.</p>
+    }
+  </div>
+</main>
+
+@if (preview(); as photo) {
+  <div class="lightbox" (click)="closePreview()" role="dialog" aria-modal="true">
+    <button class="lightbox__close" type="button" aria-label="Fechar" (click)="closePreview()">×</button>
+    <img [src]="photo.url" [alt]="photo.alt" (click)="$event.stopPropagation()" />
+  </div>
+}
+
+<app-footer />

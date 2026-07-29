@@ -1,0 +1,60 @@
+<section class="page">
+  <header>
+    <h1>Fotos do portfólio</h1>
+    <p>Selecione a categoria e envie as fotos da página correspondente.</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" [formGroup]="form" (submit)="$event.preventDefault()">
+      <h2>Upload</h2>
+      <div class="form-field">
+        <label for="categoryId">Categoria</label>
+        <select id="categoryId" formControlName="categoryId">
+          <option value="">Selecione</option>
+          @for (cat of categories(); track cat.id) {
+            <option [value]="cat.id">{{ cat.title }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="alt">Descrição (opcional)</label>
+        <input id="alt" formControlName="alt" />
+      </div>
+
+      <label class="btn btn-primary file-btn">
+        {{ uploading() ? 'Enviando...' : 'Selecionar fotos' }}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          [disabled]="uploading()"
+          (change)="onFilesSelected($event)"
+        />
+      </label>
+
+      @if (uploading()) {
+        <div class="progress"><span [style.width.%]="progress()"></span></div>
+      }
+      @if (message()) { <p class="ok">{{ message() }}</p> }
+      @if (error()) { <p class="err">{{ error() }}</p> }
+    </form>
+
+    <div class="panel">
+      <h2>Fotos da categoria</h2>
+      <div class="thumbs">
+        @for (photo of photos$ | async; track photo.id) {
+          <figure>
+            <img [src]="photo.url" [alt]="photo.alt" />
+            <figcaption>
+              <span>{{ photo.alt }}</span>
+              <button type="button" class="btn btn-danger" (click)="remove(photo)">Excluir</button>
+            </figcaption>
+          </figure>
+        } @empty {
+          <p class="empty">Selecione uma categoria para ver as fotos.</p>
+        }
+      </div>
+    </div>
+  </div>
+</section>
