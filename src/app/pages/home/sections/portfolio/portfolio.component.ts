@@ -9,8 +9,8 @@ import {
   isCategoryActive,
 } from '../../../../core/models/portfolio.model';
 
-const DEFAULT_COUNT = DEFAULT_PORTFOLIO_CATEGORIES.length;
-const VISIBLE_DESKTOP = 6;
+/** Quantidade máxima na grade antes de virar carrossel. */
+const MAX_VISIBLE = 4;
 
 @Component({
   selector: 'app-portfolio',
@@ -65,7 +65,7 @@ export class PortfolioComponent implements OnDestroy {
   }
 
   isCarousel() {
-    return this.items().length > DEFAULT_COUNT;
+    return this.items().length > MAX_VISIBLE;
   }
 
   visibleItems() {
@@ -73,7 +73,7 @@ export class PortfolioComponent implements OnDestroy {
     if (!this.isCarousel()) return list;
     const total = list.length;
     const start = this.index();
-    const count = Math.min(VISIBLE_DESKTOP, total);
+    const count = Math.min(MAX_VISIBLE, total);
     return Array.from({ length: count }, (_, offset) => list[(start + offset) % total]);
   }
 
