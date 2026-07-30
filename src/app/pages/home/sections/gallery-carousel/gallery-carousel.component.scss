@@ -143,20 +143,26 @@
 
 @media (max-width: 600px) {
   .gallery__stage {
-    grid-template-columns: 2.25rem 1fr 2.25rem;
-    gap: 0.35rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem 0.5rem;
   }
 
   .gallery__track {
+    flex: 1 1 100%;
+    order: -1;
     grid-template-columns: 1fr;
     min-height: 0;
   }
 
   .gallery__card {
     min-height: 0;
-    max-height: 11.5rem;
-    padding: 0.85rem 1rem;
-    aspect-ratio: 4 / 3;
+    max-height: none;
+    aspect-ratio: auto;
+    padding: 0.5rem;
+    overflow: hidden;
   }
 
   .gallery__card:nth-child(n + 2) {
@@ -164,11 +170,11 @@
   }
 
   .gallery__card img {
-    width: auto;
+    width: 100%;
     height: auto;
-    max-width: 100%;
-    max-height: 100%;
+    max-height: min(52vh, 22rem);
     object-fit: contain;
+    object-position: center;
   }
 
   .gallery__nav {
@@ -177,8 +183,20 @@
     font-size: 1.2rem;
   }
 
+  .gallery__card:hover,
+  .gallery__card:focus-visible,
+  .gallery__card:active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .gallery__card:hover img,
+  .gallery__card:focus-visible img,
+  .gallery__card:active img {
+    transform: none;
+  }
+
   .gallery__card:active {
     border-color: var(--nox-gold);
-    transform: translateY(-2px) scale(1.02);
   }
 }
