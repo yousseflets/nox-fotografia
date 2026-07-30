@@ -1,8 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, of, switchMap } from 'rxjs';
+import { combineLatest, map, of, startWith, switchMap } from 'rxjs';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { FooterComponent } from '../../shared/components/footer/footer.component';
 import { PortfolioService } from '../../core/services/portfolio.service';
@@ -11,6 +10,12 @@ import {
   PortfolioCategory,
   PortfolioPhoto,
 } from '../../core/models/portfolio.model';
+
+type CategoryView = {
+  loading: boolean;
+  category?: PortfolioCategory;
+  photos: PortfolioPhoto[];
+};
 
 @Component({
   selector: 'app-portfolio-category',
@@ -24,37 +29,49 @@ export class PortfolioCategoryComponent {
   private readonly portfolio = inject(PortfolioService);
 
   readonly preview = signal<PortfolioPhoto | null>(null);
+  readonly loadedIds = signal<Record<string, boolean>>({});
 
-  readonly slug = toSignal(
-    this.route.paramMap.pipe(map((p) => p.get('slug') || '')),
-    { initialValue: '' }
-  );
-
-  readonly category$ = this.route.paramMap.pipe(
+  readonly view$ = this.route.paramMap.pipe(
     map((p) => p.get('slug') || ''),
-    switchMap((slug) =>
-      this.portfolio.getCategories().pipe(
-        map((list) => {
-          const found = list.find((c) => c.slug === slug);
+    switchMap((slug) => {
+      if (!slug) {
+        return of<CategoryView>({ loading: false, category: undefined, photos: [] });
+      }
+
+      const category$ = this.portfolio.getCategoryBySlug(slug).pipe(
+        map((found) => {
           if (found) return found;
           const fallback = DEFAULT_PORTFOLIO_CATEGORIES.find((c) => c.slug === slug);
           if (!fallback) return undefined;
           return {
             ...fallback,
+            active: true,
             createdAt: '',
           } as PortfolioCategory;
         })
-      )
-    )
+      );
+
+      return combineLatest({
+        category: category$,
+        photosBySlug: this.portfolio.getPhotosBySlug(slug),
+      }).pipe(
+        switchMap(({ category, photosBySlug }) => {
+          if (photosBySlug.length || !category?.id) {
+            return of<CategoryView>({ loading: false, category, photos: photosBySlug });
+          }
+          return this.portfolio.getPhotosByCategoryOnce(category.id).pipe(
+            map((photos) => ({ loading: false, category, photos }))
+          );
+        }),
+        startWith<CategoryView>({ loading: true, category: undefined, photos: [] })
+      );
+    })
   );
 
-  readonly photos$ = this.category$.pipe(
-    switchMap((category) =>
-      category?.id
-        ? this.portfolio.getPhotosByCategory(category.id)
-        : of([] as PortfolioPhoto[])
-    )
-  );
+  markLoaded(id: string | undefined) {
+    if (!id) return;
+    this.loadedIds.update((map) => ({ ...map, [id]: true }));
+  }
 
   openPreview(photo: PortfolioPhoto) {
     this.preview.set(photo);

@@ -19,7 +19,7 @@ import {
   ref,
   uploadBytesResumable,
 } from '@angular/fire/storage';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, from, map, of, shareReplay } from 'rxjs';
 import {
   DEFAULT_PORTFOLIO_CATEGORIES,
   PortfolioCategory,
@@ -33,33 +33,61 @@ export class PortfolioService {
   private readonly firestore = inject(Firestore);
   private readonly storage = inject(Storage);
 
+  private readonly categories$ = new Observable<PortfolioCategory[]>((subscriber) => {
+    const q = query(collection(this.firestore, 'portfolioCategories'), orderBy('order', 'asc'));
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        subscriber.next(
+          snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PortfolioCategory)
+        );
+      },
+      (err) => subscriber.error(err)
+    );
+    return () => unsub();
+  }).pipe(
+    catchError((err) => {
+      console.error('[PortfolioService.getCategories]', err);
+      return of([] as PortfolioCategory[]);
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+
   getCategories(): Observable<PortfolioCategory[]> {
+    return this.categories$;
+  }
+
+  /** Busca pontual por slug (mais rápida que listar todas as categorias). */
+  getCategoryBySlug(slug: string): Observable<PortfolioCategory | undefined> {
     const q = query(
       collection(this.firestore, 'portfolioCategories'),
-      orderBy('order', 'asc')
+      where('slug', '==', slug)
     );
-
-    return new Observable<PortfolioCategory[]>((subscriber) => {
-      const unsub = onSnapshot(
-        q,
-        (snap) => {
-          subscriber.next(
-            snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PortfolioCategory)
-          );
-        },
-        (err) => subscriber.error(err)
-      );
-      return () => unsub();
-    }).pipe(
+    return from(getDocs(q)).pipe(
+      map((snap) => {
+        const d = snap.docs[0];
+        return d ? ({ id: d.id, ...d.data() } as PortfolioCategory) : undefined;
+      }),
       catchError((err) => {
-        console.error('[PortfolioService.getCategories]', err);
-        return of([]);
+        console.error('[PortfolioService.getCategoryBySlug]', err);
+        return of(undefined);
       })
     );
   }
 
-  getCategoryBySlug(slug: string): Observable<PortfolioCategory | undefined> {
-    return this.getCategories().pipe(map((list) => list.find((item) => item.slug === slug)));
+  /** Fotos por slug — permite carregar em paralelo com a categoria. */
+  getPhotosBySlug(slug: string): Observable<PortfolioPhoto[]> {
+    const q = query(
+      collection(this.firestore, 'portfolioPhotos'),
+      where('categorySlug', '==', slug)
+    );
+    return from(getDocs(q)).pipe(
+      map((snap) => this.sortPhotos(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PortfolioPhoto))),
+      catchError((err) => {
+        console.error('[PortfolioService.getPhotosBySlug]', err);
+        return of([] as PortfolioPhoto[]);
+      })
+    );
   }
 
   async createCategory(data: {
@@ -178,11 +206,11 @@ export class PortfolioService {
       const unsub = onSnapshot(
         q,
         (snap) => {
-          const items = snap.docs.map(
-            (d) => ({ id: d.id, ...d.data() }) as PortfolioPhoto
+          subscriber.next(
+            this.sortPhotos(
+              snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PortfolioPhoto)
+            )
           );
-          items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-          subscriber.next(items);
         },
         (err) => subscriber.error(err)
       );
@@ -191,6 +219,17 @@ export class PortfolioService {
       catchError((err) => {
         console.error('[PortfolioService.getPhotosByCategory]', err);
         return of([]);
+      })
+    );
+  }
+
+  /** Uma leitura pontual por categoryId (fallback / admin pontual). */
+  getPhotosByCategoryOnce(categoryId: string): Observable<PortfolioPhoto[]> {
+    return from(this.getPhotosOnce(categoryId)).pipe(
+      map((items) => this.sortPhotos(items)),
+      catchError((err) => {
+        console.error('[PortfolioService.getPhotosByCategoryOnce]', err);
+        return of([] as PortfolioPhoto[]);
       })
     );
   }
@@ -227,6 +266,10 @@ export class PortfolioService {
     if (photo.id) {
       await deleteDoc(doc(this.firestore, `portfolioPhotos/${photo.id}`));
     }
+  }
+
+  private sortPhotos(items: PortfolioPhoto[]): PortfolioPhoto[] {
+    return [...items].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   }
 
   private async getPhotosOnce(categoryId: string): Promise<PortfolioPhoto[]> {
