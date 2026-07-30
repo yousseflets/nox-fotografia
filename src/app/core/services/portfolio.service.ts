@@ -67,6 +67,7 @@ export class PortfolioService {
     icon: PortfolioIcon;
     coverFile?: File | null;
     order?: number;
+    active?: boolean;
   }): Promise<string> {
     const slug = slugify(data.title);
     let coverUrl =
@@ -90,6 +91,7 @@ export class PortfolioService {
       coverUrl,
       coverStoragePath,
       order: data.order ?? Date.now(),
+      active: data.active !== false,
       createdAt: new Date().toISOString(),
     };
 
@@ -99,13 +101,22 @@ export class PortfolioService {
 
   async updateCategory(
     id: string,
-    data: { title: string; icon: PortfolioIcon; coverFile?: File | null }
+    data: {
+      title: string;
+      icon: PortfolioIcon;
+      coverFile?: File | null;
+      active?: boolean;
+    }
   ): Promise<void> {
     const patch: Partial<PortfolioCategory> = {
       title: data.title.trim(),
       slug: slugify(data.title),
       icon: data.icon,
     };
+
+    if (data.active !== undefined) {
+      patch.active = data.active;
+    }
 
     if (data.coverFile) {
       const uploaded = await this.uploadFile(
@@ -117,6 +128,10 @@ export class PortfolioService {
     }
 
     await updateDoc(doc(this.firestore, `portfolioCategories/${id}`), patch);
+  }
+
+  async setCategoryActive(id: string, active: boolean): Promise<void> {
+    await updateDoc(doc(this.firestore, `portfolioCategories/${id}`), { active });
   }
 
   async deleteCategory(category: PortfolioCategory): Promise<void> {
@@ -145,6 +160,7 @@ export class PortfolioService {
       if (existingSlugs.has(item.slug)) continue;
       await addDoc(collection(this.firestore, 'portfolioCategories'), {
         ...item,
+        active: true,
         createdAt: new Date().toISOString(),
       } satisfies Omit<PortfolioCategory, 'id'>);
       created += 1;

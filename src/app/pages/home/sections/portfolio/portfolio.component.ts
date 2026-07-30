@@ -6,6 +6,7 @@ import { PortfolioService } from '../../../../core/services/portfolio.service';
 import {
   DEFAULT_PORTFOLIO_CATEGORIES,
   PortfolioCategory,
+  isCategoryActive,
 } from '../../../../core/models/portfolio.model';
 
 const DEFAULT_COUNT = DEFAULT_PORTFOLIO_CATEGORIES.length;
@@ -26,18 +27,21 @@ export class PortfolioComponent implements OnDestroy {
 
   readonly items = toSignal(
     this.portfolio.getCategories().pipe(
-      map((list) =>
-        list.length
-          ? list
-          : (DEFAULT_PORTFOLIO_CATEGORIES.map((item) => ({
-              ...item,
-              createdAt: '',
-            })) as PortfolioCategory[])
-      )
+      map((list) => {
+        if (!list.length) {
+          return DEFAULT_PORTFOLIO_CATEGORIES.map((item) => ({
+            ...item,
+            active: true,
+            createdAt: '',
+          })) as PortfolioCategory[];
+        }
+        return list.filter(isCategoryActive);
+      })
     ),
     {
       initialValue: DEFAULT_PORTFOLIO_CATEGORIES.map((item) => ({
         ...item,
+        active: true,
         createdAt: '',
       })) as PortfolioCategory[],
     }

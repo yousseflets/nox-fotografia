@@ -15,6 +15,8 @@ export interface PortfolioCategory {
   coverUrl: string;
   coverStoragePath?: string;
   order: number;
+  /** Se omitido (categorias antigas), conta como ativa. */
+  active?: boolean;
   createdAt: string;
 }
 
@@ -108,4 +110,9 @@ export function slugify(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+}
+
+/** Categorias antigas sem o campo contam como ativas. */
+export function isCategoryActive(category: Pick<PortfolioCategory, 'active'> | { active?: boolean }): boolean {
+  return category.active !== false;
 }

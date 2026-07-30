@@ -7,6 +7,7 @@ import {
   PORTFOLIO_ICON_OPTIONS,
   PortfolioCategory,
   PortfolioIcon,
+  isCategoryActive,
 } from '../../../core/models/portfolio.model';
 
 @Component({
@@ -28,9 +29,12 @@ export class AdminPortfolioCategoriesComponent {
   readonly editingId = signal<string | null>(null);
   coverFile: File | null = null;
 
+  readonly isActive = isCategoryActive;
+
   readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     icon: ['rings' as PortfolioIcon, Validators.required],
+    active: [true],
   });
 
   startEdit(item: PortfolioCategory) {
@@ -39,13 +43,17 @@ export class AdminPortfolioCategoriesComponent {
     this.coverFile = null;
     this.message.set('');
     this.error.set('');
-    this.form.setValue({ title: item.title, icon: item.icon });
+    this.form.setValue({
+      title: item.title,
+      icon: item.icon,
+      active: isCategoryActive(item),
+    });
   }
 
   cancelEdit() {
     this.editingId.set(null);
     this.coverFile = null;
-    this.form.reset({ title: '', icon: 'rings' });
+    this.form.reset({ title: '', icon: 'rings', active: true });
     this.message.set('');
     this.error.set('');
   }
@@ -74,6 +82,30 @@ export class AdminPortfolioCategoriesComponent {
     }
   }
 
+  async toggleActive(item: PortfolioCategory) {
+    if (!item.id) return;
+    this.loading.set(true);
+    this.error.set('');
+    this.message.set('');
+    const next = !isCategoryActive(item);
+    try {
+      await this.portfolio.setCategoryActive(item.id, next);
+      this.message.set(
+        next
+          ? `"${item.title}" ativada na home.`
+          : `"${item.title}" desativada (oculta na home).`
+      );
+      if (this.editingId() === item.id) {
+        this.form.patchValue({ active: next });
+      }
+    } catch (err) {
+      console.error(err);
+      this.error.set(this.errMsg(err, 'atualizar status'));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -82,13 +114,14 @@ export class AdminPortfolioCategoriesComponent {
     this.loading.set(true);
     this.error.set('');
     this.message.set('');
-    const { title, icon } = this.form.getRawValue();
+    const { title, icon, active } = this.form.getRawValue();
     const id = this.editingId();
     try {
       if (id) {
         await this.portfolio.updateCategory(id, {
           title,
           icon,
+          active,
           coverFile: this.coverFile,
         });
         this.cancelEdit();
@@ -97,10 +130,11 @@ export class AdminPortfolioCategoriesComponent {
         await this.portfolio.createCategory({
           title,
           icon,
+          active,
           coverFile: this.coverFile,
         });
         this.message.set('Categoria cadastrada.');
-        this.form.reset({ title: '', icon: 'rings' });
+        this.form.reset({ title: '', icon: 'rings', active: true });
         this.coverFile = null;
       }
     } catch (err) {
