@@ -25,7 +25,19 @@
     <div class="gallery">
       @for (photo of photos$ | async; track photo.id; let i = $index) {
         <figure>
-          <img [src]="photo.url" [alt]="photo.filename" loading="lazy" />
+          <div
+            class="thumb"
+            [class.thumb--loaded]="loadedIds()[photo.id || '']"
+          >
+            <img
+              [src]="thumbUrl(photo)"
+              [alt]="photo.filename"
+              [attr.loading]="i < 12 ? 'eager' : 'lazy'"
+              [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
+              decoding="async"
+              (load)="markLoaded(photo.id)"
+            />
+          </div>
           <figcaption>
             <span>{{ photo.filename }}</span>
             <button

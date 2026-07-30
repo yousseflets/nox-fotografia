@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
-import { Photo } from '../../../core/models/photo.model';
+import { Photo, photoThumbUrl } from '../../../core/models/photo.model';
 
 @Component({
   selector: 'app-client-album-detail',
@@ -22,9 +22,17 @@ export class ClientAlbumDetailComponent {
   readonly albumId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly zipping = signal(false);
   readonly downloadingId = signal<string | null>(null);
+  readonly loadedIds = signal<Record<string, boolean>>({});
 
   readonly album$ = this.albums.getById(this.albumId);
   readonly photos$ = this.photos.getByAlbum(this.albumId);
+
+  readonly thumbUrl = photoThumbUrl;
+
+  markLoaded(id: string | undefined) {
+    if (!id) return;
+    this.loadedIds.update((map) => ({ ...map, [id]: true }));
+  }
 
   async downloadOne(photo: Photo, index = 0) {
     const id = photo.id ?? photo.storagePath ?? String(index);

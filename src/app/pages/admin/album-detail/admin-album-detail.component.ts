@@ -3,7 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
-import { Photo } from '../../../core/models/photo.model';
+import { Photo, photoThumbUrl } from '../../../core/models/photo.model';
 
 @Component({
   selector: 'app-admin-album-detail',
@@ -22,11 +22,19 @@ export class AdminAlbumDetailComponent {
   readonly deleting = signal(false);
   readonly progress = signal(0);
   readonly message = signal('');
+  readonly loadedIds = signal<Record<string, boolean>>({});
 
   readonly albumId = this.route.snapshot.paramMap.get('id') ?? '';
 
   readonly album$ = this.albums.getById(this.albumId);
   readonly photos$ = this.photos.getByAlbum(this.albumId);
+
+  readonly thumbUrl = photoThumbUrl;
+
+  markLoaded(id: string | undefined) {
+    if (!id) return;
+    this.loadedIds.update((map) => ({ ...map, [id]: true }));
+  }
 
   async onFilesSelected(event: Event, clientId: string) {
     const input = event.target as HTMLInputElement;
@@ -59,7 +67,7 @@ export class AdminAlbumDetailComponent {
 
   async deleteAlbum(title: string) {
     const ok = confirm(
-      `Excluir o álbum "${title}"?\nTodas as fotos deste álbum também serão removidas.`
+      'Excluir o álbum "' + title + '"?\nTodas as fotos deste álbum também serão removidas.'
     );
     if (!ok) return;
 

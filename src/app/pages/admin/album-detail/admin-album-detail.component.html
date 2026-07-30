@@ -1,5 +1,5 @@
 <section class="page">
-  <a class="back" routerLink="/admin/albuns"> ↝ Voltar</a>
+  <a class="back" routerLink="/admin/albuns">← Voltar</a>
 
   @if (album$ | async; as album) {
     <header class="page-head">
@@ -42,9 +42,21 @@
     </div>
 
     <div class="gallery">
-      @for (photo of photos$ | async; track photo.id) {
+      @for (photo of photos$ | async; track photo.id; let i = $index) {
         <figure>
-          <img [src]="photo.url" [alt]="photo.filename" />
+          <div
+            class="thumb"
+            [class.thumb--loaded]="loadedIds()[photo.id || '']"
+          >
+            <img
+              [src]="thumbUrl(photo)"
+              [alt]="photo.filename"
+              [attr.loading]="i < 12 ? 'eager' : 'lazy'"
+              [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
+              decoding="async"
+              (load)="markLoaded(photo.id)"
+            />
+          </div>
           <figcaption>
             <span>{{ photo.filename }}</span>
             <button type="button" class="btn btn-ghost" (click)="remove(photo)">Remover</button>
@@ -55,6 +67,6 @@
       }
     </div>
   } @else {
-    <p class="empty">Ýlbum não encontrado.</p>
+    <p class="empty">Álbum não encontrado.</p>
   }
 </section>

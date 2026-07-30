@@ -21,6 +21,7 @@ import {
 } from '@angular/fire/storage';
 import { Observable, catchError, map, of } from 'rxjs';
 import { Photo } from '../models/photo.model';
+import { createImageThumbnail } from '../utils/image-thumbnail';
 
 @Injectable({ providedIn: 'root' })
 export class PhotoService {
@@ -91,42 +92,49 @@ export class PhotoService {
     onProgress?: (pct: number) => void
   ): Promise<Photo> {
     const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-    const storagePath = `clients/${clientId}/albums/${albumId}/${Date.now()}_${safeName}`;
-    const storageRef = ref(this.storage, storagePath);
+    const stamp = Date.now();
+    const baseDir = `clients/${clientId}/albums/${albumId}`;
+    const storagePath = `${baseDir}/${stamp}_${safeName}`;
+    const thumbStoragePath = `${baseDir}/${stamp}_${safeName.replace(/\.[^.]+$/, '')}_thumb.jpg`;
 
-    const task = uploadBytesResumable(storageRef, file);
-
-    await new Promise<void>((resolve, reject) => {
-      task.on(
-        'state_changed',
-        (snap) => {
-          const pct = (snap.bytesTransferred / snap.totalBytes) * 100;
-          onProgress?.(pct);
-        },
-        reject,
-        () => resolve()
+    let thumbUrl: string | undefined;
+    try {
+      const thumbBlob = await createImageThumbnail(file);
+      onProgress?.(5);
+      const thumb = await this.uploadBlob(thumbBlob, thumbStoragePath, (pct) =>
+        onProgress?.(5 + pct * 0.15)
       );
-    });
+      thumbUrl = thumb.url;
+    } catch (err) {
+      console.warn('[PhotoService] miniatura não gerada', err);
+    }
 
-    const url = await getDownloadURL(storageRef);
+    const original = await this.uploadBlob(file, storagePath, (pct) =>
+      onProgress?.(20 + pct * 0.8)
+    );
+
     const photo: Omit<Photo, 'id'> = {
       albumId,
-      url,
+      url: original.url,
       filename: file.name,
       storagePath,
+      thumbUrl,
+      thumbStoragePath: thumbUrl ? thumbStoragePath : undefined,
       createdAt: new Date().toISOString(),
     };
 
     const docRef = await addDoc(collection(this.firestore, 'photos'), photo);
+    onProgress?.(100);
     return { id: docRef.id, ...photo };
   }
 
   async deletePhoto(photo: Photo): Promise<void> {
-    if (photo.storagePath) {
+    for (const path of [photo.storagePath, photo.thumbStoragePath]) {
+      if (!path) continue;
       try {
-        await deleteObject(ref(this.storage, photo.storagePath));
+        await deleteObject(ref(this.storage, path));
       } catch {
-        // arquivo pode jÃƒÂ¡ ter sido removido
+        // arquivo pode já ter sido removido
       }
     }
     if (photo.id) {
@@ -141,5 +149,32 @@ export class PhotoService {
     for (const d of snap.docs) {
       await this.deletePhoto({ id: d.id, ...d.data() } as Photo);
     }
+  }
+
+  private uploadBlob(
+    data: Blob | File,
+    storagePath: string,
+    onProgress?: (pct: number) => void
+  ): Promise<{ url: string; storagePath: string }> {
+    const storageRef = ref(this.storage, storagePath);
+    const task = uploadBytesResumable(storageRef, data);
+
+    return new Promise((resolve, reject) => {
+      task.on(
+        'state_changed',
+        (snap) => {
+          onProgress?.((snap.bytesTransferred / snap.totalBytes) * 100);
+        },
+        reject,
+        async () => {
+          try {
+            const url = await getDownloadURL(storageRef);
+            resolve({ url, storagePath });
+          } catch (err) {
+            reject(err);
+          }
+        }
+      );
+    });
   }
 }
