@@ -1,5 +1,5 @@
 <section class="page">
-  <a class="back" routerLink="/admin/albuns">← Voltar</a>
+  <a class="back" routerLink="/admin/albuns">↝ Voltar</a>
 
   @if (album$ | async; as album) {
     <header class="page-head">
@@ -48,6 +48,7 @@
             class="thumb"
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
           >
+            <span class="thumb__num" aria-hidden="true">{{ i + 1 }}</span>
             <img
               [src]="thumbUrl(photo)"
               [alt]="photo.filename"
@@ -67,6 +68,6 @@
       }
     </div>
   } @else {
-    <p class="empty">Álbum não encontrado.</p>
+    <p class="empty">Ýlbum não encontrado.</p>
   }
 </section>

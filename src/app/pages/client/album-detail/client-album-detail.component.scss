@@ -38,11 +38,31 @@ figure {
 }
 
 .thumb {
+  position: relative;
   aspect-ratio: 1;
   background: linear-gradient(90deg, #121212 25%, #1c1c1c 50%, #121212 75%);
   background-size: 200% 100%;
   animation: shimmer 1.2s ease-in-out infinite;
   overflow: hidden;
+}
+
+.thumb__num {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  z-index: 1;
+  min-width: 1.55rem;
+  height: 1.55rem;
+  padding: 0 0.35rem;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid var(--nox-gold);
+  color: var(--nox-gold);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1;
 }
 
 .thumb img {
