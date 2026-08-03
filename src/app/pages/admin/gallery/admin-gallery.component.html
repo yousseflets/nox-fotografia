@@ -19,12 +19,21 @@
           accept="image/*"
           multiple
           hidden
-          [disabled]="uploading()"
+          [disabled]="uploading() || optimizing()"
           (change)="onFilesSelected($event)"
         />
       </label>
 
-      @if (uploading()) {
+      <button
+        class="btn btn-outline file-btn"
+        type="button"
+        [disabled]="uploading() || optimizing()"
+        (click)="optimize()"
+      >
+        {{ optimizing() ? 'Otimizando...' : 'Otimizar fotos antigas' }}
+      </button>
+
+      @if (uploading() || optimizing()) {
         <div class="progress">
           <span [style.width.%]="progress()"></span>
         </div>
@@ -43,7 +52,7 @@
       <div class="thumbs">
         @for (image of list$ | async; track image.id) {
           <figure>
-            <img [src]="image.url" [alt]="image.alt" />
+            <img [src]="displayUrl(image)" [alt]="image.alt" loading="lazy" />
             <figcaption>
               <span>{{ image.alt }}</span>
               <button type="button" class="btn btn-danger" (click)="remove(image)">

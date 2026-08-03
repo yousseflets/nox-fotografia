@@ -28,11 +28,13 @@
   min-height: 18rem;
   padding: 0.75rem;
   border: 1px solid var(--nox-border);
-  background: #0a0a0a;
+  background:
+    linear-gradient(90deg, #121212 25%, #1c1c1c 50%, #121212 75%);
+  background-size: 200% 100%;
+  animation: gallery-shimmer 1.2s ease-in-out infinite;
   cursor: pointer;
   overflow: hidden;
   transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
-  animation: fade-up 0.45s ease;
 }
 
 .gallery__card img {
@@ -41,7 +43,22 @@
   max-height: 20rem;
   object-fit: contain;
   object-position: center;
-  transition: transform 0.35s ease;
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.gallery__card img.is-loaded {
+  opacity: 1;
+}
+
+.gallery__card:has(img.is-loaded) {
+  animation: none;
+  background: #0a0a0a;
+}
+
+@keyframes gallery-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 .gallery__card:hover,

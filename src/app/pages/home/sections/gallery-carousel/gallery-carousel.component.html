@@ -20,14 +20,22 @@
       </button>
 
       <div class="gallery__track">
-        @for (image of visibleImages(); track image.id || image.src + $index) {
+        @for (image of visibleImages(); track image.id || image.src; let i = $index) {
           <button
             type="button"
             class="gallery__card"
             (click)="openPreview(image)"
             [attr.aria-label]="'Ampliar ' + image.alt"
           >
-            <img [src]="image.src" [alt]="image.alt" loading="lazy" />
+            <img
+              [src]="image.src"
+              [alt]="image.alt"
+              [class.is-loaded]="loadedIds()[imageKey(image)]"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
+              (load)="markLoaded(imageKey(image))"
+            />
           </button>
         }
       </div>
@@ -61,7 +69,7 @@
         ×
       </button>
       <img
-        [src]="image.src"
+        [src]="image.fullSrc"
         [alt]="image.alt"
         (click)="$event.stopPropagation()"
       />
