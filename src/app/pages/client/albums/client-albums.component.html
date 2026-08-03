@@ -7,12 +7,11 @@
   <div class="grid">
     @for (album of albums$ | async; track album.id) {
       <a class="album panel" [routerLink]="['/cliente/album', album.id]">
-        <div
-          class="album__cover"
-          [style.backgroundImage]="
-            album.coverUrl ? 'url(' + album.coverUrl + ')' : null
-          "
-        ></div>
+        <div class="album__cover">
+          @if (album.coverUrl) {
+            <img [src]="album.coverUrl" [alt]="album.title" loading="lazy" />
+          }
+        </div>
         <div class="album__meta">
           <h2>{{ album.title }}</h2>
           <span>{{ album.createdAt | date: 'dd/MM/yyyy' }}</span>

@@ -137,3 +137,18 @@ figcaption span {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.pager__info {
+  color: var(--nox-muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}

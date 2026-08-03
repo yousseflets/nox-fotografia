@@ -1,11 +1,17 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
 import { Photo, photoThumbUrl } from '../../../core/models/photo.model';
+import {
+  ALBUM_PHOTOS_PAGE_SIZE,
+  paginateItems,
+  totalPages,
+} from '../../../core/utils/album-pagination';
 
 @Component({
   selector: 'app-client-album-detail',
@@ -19,19 +25,38 @@ export class ClientAlbumDetailComponent {
   private readonly albums = inject(AlbumService);
   private readonly photos = inject(PhotoService);
 
+  readonly pageSize = ALBUM_PHOTOS_PAGE_SIZE;
   readonly albumId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly zipping = signal(false);
   readonly downloadingId = signal<string | null>(null);
   readonly loadedIds = signal<Record<string, boolean>>({});
+  readonly page = signal(1);
 
   readonly album$ = this.albums.getById(this.albumId);
   readonly photos$ = this.photos.getByAlbum(this.albumId);
+  readonly allPhotos = toSignal(this.photos$, { initialValue: [] as Photo[] });
+
+  readonly pageCount = computed(() => totalPages(this.allPhotos().length));
+  readonly pagedPhotos = computed(() =>
+    paginateItems(this.allPhotos(), this.page(), this.pageSize)
+  );
+  readonly showPager = computed(() => this.allPhotos().length > 0);
 
   readonly thumbUrl = photoThumbUrl;
 
   markLoaded(id: string | undefined) {
     if (!id) return;
     this.loadedIds.update((map) => ({ ...map, [id]: true }));
+  }
+
+  photoNumber(indexOnPage: number): number {
+    return (this.page() - 1) * this.pageSize + indexOnPage + 1;
+  }
+
+  goToPage(page: number) {
+    const max = this.pageCount();
+    if (!max) return;
+    this.page.set(Math.min(max, Math.max(1, page)));
   }
 
   async downloadOne(photo: Photo, index = 0) {

@@ -1,5 +1,5 @@
 <section class="page">
-  <a class="back" routerLink="/admin/albuns">↝ Voltar</a>
+  <a class="back" routerLink="/admin/albuns">← Voltar</a>
 
   @if (album$ | async; as album) {
     <header class="page-head">
@@ -42,13 +42,13 @@
     </div>
 
     <div class="gallery">
-      @for (photo of photos$ | async; track photo.id; let i = $index) {
+      @for (photo of pagedPhotos(); track photo.id; let i = $index) {
         <figure>
           <div
             class="thumb"
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
           >
-            <span class="thumb__num" aria-hidden="true">{{ i + 1 }}</span>
+            <span class="thumb__num" aria-hidden="true">{{ photoNumber(i) }}</span>
             <img
               [src]="thumbUrl(photo)"
               [alt]="photo.filename"
@@ -67,7 +67,29 @@
         <p class="empty">Nenhuma foto neste álbum ainda.</p>
       }
     </div>
+
+    @if (showPager()) {
+      <nav class="pager" aria-label="Paginação das fotos">
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          [disabled]="page() <= 1"
+          (click)="goToPage(page() - 1)"
+        >
+          Anterior
+        </button>
+        <span class="pager__info">Página {{ page() }} de {{ pageCount() }}</span>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          [disabled]="page() >= pageCount()"
+          (click)="goToPage(page() + 1)"
+        >
+          Próxima
+        </button>
+      </nav>
+    }
   } @else {
-    <p class="empty">Ýlbum não encontrado.</p>
+    <p class="empty">Álbum não encontrado.</p>
   }
 </section>

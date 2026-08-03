@@ -20,7 +20,7 @@ import {
   getBytes,
 } from '@angular/fire/storage';
 import { Observable, catchError, map, of } from 'rxjs';
-import { Photo } from '../models/photo.model';
+import { Photo, photoThumbUrl } from '../models/photo.model';
 import { createImageThumbnail } from '../utils/image-thumbnail';
 
 @Injectable({ providedIn: 'root' })
@@ -48,15 +48,29 @@ export class PhotoService {
       );
       return () => unsub();
     }).pipe(
-      map((list) =>
-        [...list].sort((a, b) =>
-          (b.createdAt || '').localeCompare(a.createdAt || '')
-        )
-      ),
+      map((list) => this.sortPhotos(list)),
       catchError((err) => {
         console.error('[PhotoService.getByAlbum]', err);
         return of([]);
       })
+    );
+  }
+
+  /** Capa do álbum: miniatura da foto mais recente (ou url original). */
+  async getAlbumCoverUrl(albumId: string): Promise<string | undefined> {
+    const snap = await getDocs(
+      query(collection(this.firestore, 'photos'), where('albumId', '==', albumId))
+    );
+    const items = this.sortPhotos(
+      snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Photo)
+    );
+    const first = items[0];
+    return first ? photoThumbUrl(first) : undefined;
+  }
+
+  private sortPhotos(list: Photo[]): Photo[] {
+    return [...list].sort((a, b) =>
+      (b.createdAt || '').localeCompare(a.createdAt || '')
     );
   }
 

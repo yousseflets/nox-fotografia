@@ -1,5 +1,5 @@
 <section class="page">
-  <a class="back" routerLink="/cliente">↝ Meus álbuns</a>
+  <a class="back" routerLink="/cliente">← Meus álbuns</a>
 
   @if (album$ | async; as album) {
     <header>
@@ -10,26 +10,24 @@
         }
       </div>
 
-      @if (photos$ | async; as photos) {
-        <button
-          class="btn btn-primary"
-          type="button"
-          [disabled]="!photos.length || zipping() || downloadingId()"
-          (click)="downloadAll(photos, album.title)"
-        >
-          {{ zipping() ? 'Gerando ZIP...' : 'Baixar todas (ZIP)' }}
-        </button>
-      }
+      <button
+        class="btn btn-primary"
+        type="button"
+        [disabled]="!allPhotos().length || zipping() || downloadingId()"
+        (click)="downloadAll(allPhotos(), album.title)"
+      >
+        {{ zipping() ? 'Gerando ZIP...' : 'Baixar todas (ZIP)' }}
+      </button>
     </header>
 
     <div class="gallery">
-      @for (photo of photos$ | async; track photo.id; let i = $index) {
+      @for (photo of pagedPhotos(); track photo.id; let i = $index) {
         <figure>
           <div
             class="thumb"
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
           >
-            <span class="thumb__num" aria-hidden="true">{{ i + 1 }}</span>
+            <span class="thumb__num" aria-hidden="true">{{ photoNumber(i) }}</span>
             <img
               [src]="thumbUrl(photo)"
               [alt]="photo.filename"
@@ -45,7 +43,7 @@
               type="button"
               class="btn btn-ghost"
               [disabled]="zipping() || downloadingId() === (photo.id || photo.storagePath)"
-              (click)="downloadOne(photo, i)"
+              (click)="downloadOne(photo, photoNumber(i) - 1)"
             >
               {{
                 downloadingId() === (photo.id || photo.storagePath)
@@ -59,7 +57,29 @@
         <p class="empty">Este álbum ainda não tem fotos.</p>
       }
     </div>
+
+    @if (showPager()) {
+      <nav class="pager" aria-label="Paginação das fotos">
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          [disabled]="page() <= 1"
+          (click)="goToPage(page() - 1)"
+        >
+          Anterior
+        </button>
+        <span class="pager__info">Página {{ page() }} de {{ pageCount() }}</span>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          [disabled]="page() >= pageCount()"
+          (click)="goToPage(page() + 1)"
+        >
+          Próxima
+        </button>
+      </nav>
+    }
   } @else {
-    <p class="empty">Ýlbum não encontrado ou sem permissão de acesso.</p>
+    <p class="empty">Álbum não encontrado ou sem permissão de acesso.</p>
   }
 </section>
