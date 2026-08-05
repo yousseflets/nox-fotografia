@@ -4,7 +4,7 @@
   <div class="container">
     <a class="back" routerLink="/" fragment="portfolio">← Voltar ao portfólio</a>
 
-    @if (view$ | async; as view) {
+    @if (view(); as view) {
       @if (view.loading) {
         <header>
           <p class="section-kicker">Portfólio</p>
@@ -22,7 +22,7 @@
         </header>
 
         <div class="grid">
-          @for (photo of view.photos; track photo.id; let i = $index) {
+          @for (photo of pagedPhotos(); track photo.id; let i = $index) {
             <button
               type="button"
               class="thumb"
@@ -42,6 +42,28 @@
             <p class="empty">Em breve novas fotos desta categoria.</p>
           }
         </div>
+
+        @if (showPager()) {
+          <nav class="pager" aria-label="Paginação das fotos">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              [disabled]="page() <= 1"
+              (click)="goToPage(page() - 1)"
+            >
+              Anterior
+            </button>
+            <span class="pager__info">Página {{ page() }} de {{ pageCount() }}</span>
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              [disabled]="page() >= pageCount()"
+              (click)="goToPage(page() + 1)"
+            >
+              Próxima
+            </button>
+          </nav>
+        }
       } @else {
         <p class="empty">Categoria não encontrada.</p>
       }
