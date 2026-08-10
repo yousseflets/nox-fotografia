@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, addDoc, collection } from '@angular/fire/firestore';
 import { FirebaseError } from 'firebase/app';
-import { environment } from '../../../environments/environment';
 
 export type AlbumAvailableMailInput = {
   to: string;
@@ -22,8 +21,10 @@ export class MailService {
 
     const name = input.clientName.trim() || 'ol\u00e1';
     const title = input.albumTitle.trim() || 'seu ensaio';
-    const loginUrl = `${environment.siteUrl.replace(/\/$/, '')}/login`;
-    const areaUrl = `${environment.siteUrl.replace(/\/$/, '')}/cliente`;
+    // Sempre o dominio publico (mesmo criando album no localhost)
+    const siteBase = 'https://nox-fotografia.com.br';
+    const loginUrl = `${siteBase}/login`;
+    const areaUrl = `${siteBase}/cliente`;
 
     const subject = `NOX Fotografia - \u00e1lbum dispon\u00edvel: ${title}`;
     const text = [
