@@ -16,13 +16,19 @@
         <select id="clientId" formControlName="clientId">
           <option value="">Selecione</option>
           @for (client of clients$ | async; track client.uid) {
-            <option [value]="client.uid">{{ client.name }}  {{ client.email }}</option>
+            <option [value]="client.uid">{{ client.name }} — {{ client.email }}</option>
           }
         </select>
       </div>
       <div class="form-field">
         <label for="description">Descrição</label>
         <textarea id="description" rows="3" formControlName="description"></textarea>
+      </div>
+      <div class="form-field form-field--switch">
+        <label class="switch">
+          <input type="checkbox" formControlName="notifyClient" />
+          <span>Avisar cliente por e-mail que o álbum está disponível</span>
+        </label>
       </div>
 
       @if (message()) {

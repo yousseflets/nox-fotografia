@@ -70,6 +70,24 @@ li span,
   margin-bottom: 0.75rem;
 }
 
+.switch {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  cursor: pointer;
+  color: var(--nox-cream);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.switch input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  accent-color: var(--nox-gold);
+  flex-shrink: 0;
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
