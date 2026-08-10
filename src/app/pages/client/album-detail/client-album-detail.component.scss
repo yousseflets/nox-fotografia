@@ -29,6 +29,25 @@
   gap: 1rem;
 }
 
+.gallery--empty {
+  grid-template-columns: 1fr;
+}
+
+.empty-hero {
+  margin: 0 auto;
+  max-width: 28rem;
+  width: 100%;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: #0a0a0a;
+  overflow: hidden;
+}
+
+.empty-hero img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 figure {
   margin: 0;
   border: 1px solid var(--nox-border);

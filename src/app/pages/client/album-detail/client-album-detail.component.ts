@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { map, startWith } from 'rxjs';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { AlbumService } from '../../../core/services/album.service';
@@ -34,7 +35,16 @@ export class ClientAlbumDetailComponent {
 
   readonly album$ = this.albums.getById(this.albumId);
   readonly photos$ = this.photos.getByAlbum(this.albumId);
-  readonly allPhotos = toSignal(this.photos$, { initialValue: [] as Photo[] });
+  readonly photosState = toSignal(
+    this.photos$.pipe(
+      map((photos) => ({ ready: true as const, photos })),
+      startWith({ ready: false as const, photos: [] as Photo[] })
+    ),
+    { initialValue: { ready: false as const, photos: [] as Photo[] } }
+  );
+
+  readonly allPhotos = computed(() => this.photosState().photos);
+  readonly photosReady = computed(() => this.photosState().ready);
 
   readonly pageCount = computed(() => totalPages(this.allPhotos().length));
   readonly pagedPhotos = computed(() =>

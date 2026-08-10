@@ -53,7 +53,7 @@ export class AdminAlbumsComponent {
         description: value.description,
         createdAt: new Date().toISOString(),
       });
-      this.message.set('Álbum criado. Abra-o para enviar as fotos.');
+      this.message.set('Ýlbum criado. Abra-o para enviar as fotos.');
       this.form.reset();
     } catch {
       this.error.set('Não foi possível criar o álbum.');
@@ -78,7 +78,7 @@ export class AdminAlbumsComponent {
 
     try {
       await this.albums.deleteAlbum(album.id);
-      this.message.set('Álbum excluído.');
+      this.message.set('Ýlbum excluído.');
     } catch {
       this.error.set('Não foi possível excluir o álbum.');
     } finally {
