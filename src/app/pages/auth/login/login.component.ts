@@ -20,7 +20,9 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly message = signal('');
   readonly showPassword = signal(false);
+  readonly mode = signal<'login' | 'forgot'>('login');
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -31,17 +33,34 @@ export class LoginComponent {
     this.showPassword.update((v) => !v);
   }
 
+  openForgot() {
+    this.mode.set('forgot');
+    this.error.set('');
+    this.message.set('');
+    this.form.controls.password.reset('');
+  }
+
+  backToLogin() {
+    this.mode.set('login');
+    this.error.set('');
+    this.message.set('');
+  }
+
   async submit() {
+    if (this.mode() === 'forgot') {
+      await this.sendReset();
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.error.set(
-        'Preencha e-mail e senha válidos (mínimo 6 caracteres).'
-      );
+      this.error.set('Preencha e-mail e senha v\u00e1lidos (m\u00ednimo 6 caracteres).');
       return;
     }
 
     this.loading.set(true);
     this.error.set('');
+    this.message.set('');
 
     try {
       const { email, password } = this.form.getRawValue();
@@ -57,7 +76,7 @@ export class LoginComponent {
         );
       } catch {
         this.error.set(
-          'Login ok, mas falta o perfil no Firestore (coleção users/{uid} com role = admin).'
+          'Login ok, mas falta o perfil no Firestore (cole\u00e7\u00e3o users/{uid} com role = admin).'
         );
         return;
       }
@@ -70,9 +89,48 @@ export class LoginComponent {
       }
     } catch (err) {
       if (err instanceof FirebaseError) {
-        this.error.set('E-mail ou senha inválidos.');
+        this.error.set('E-mail ou senha inv\u00e1lidos.');
       } else {
-        this.error.set('Não foi possível entrar. Tente novamente.');
+        this.error.set('N\u00e3o foi poss\u00edvel entrar. Tente novamente.');
+      }
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  private async sendReset() {
+    const emailCtrl = this.form.controls.email;
+    if (emailCtrl.invalid) {
+      emailCtrl.markAsTouched();
+      this.error.set('Informe um e-mail v\u00e1lido para recuperar a senha.');
+      this.message.set('');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set('');
+    this.message.set('');
+
+    try {
+      await this.auth.resetPassword(emailCtrl.value);
+      this.message.set(
+        'Enviamos um link de redefini\u00e7\u00e3o para o seu e-mail. Confira tamb\u00e9m a caixa de spam.'
+      );
+    } catch (err) {
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/invalid-email') {
+          this.error.set('E-mail inv\u00e1lido.');
+        } else if (err.code === 'auth/too-many-requests') {
+          this.error.set('Muitas tentativas. Aguarde um pouco e tente de novo.');
+        } else if (err.code === 'auth/user-not-found') {
+          this.message.set(
+            'Se este e-mail estiver cadastrado, voc\u00ea receber\u00e1 um link para redefinir a senha.'
+          );
+        } else {
+          this.error.set('N\u00e3o foi poss\u00edvel enviar o e-mail. Tente novamente.');
+        }
+      } else {
+        this.error.set('N\u00e3o foi poss\u00edvel enviar o e-mail. Tente novamente.');
       }
     } finally {
       this.loading.set(false);

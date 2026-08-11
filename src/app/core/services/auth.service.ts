@@ -3,6 +3,7 @@ import {
   Auth,
   authState,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
@@ -57,6 +58,12 @@ export class AuthService {
     return signInWithEmailAndPassword(this.auth, email, password);
   }
 
+  resetPassword(email: string) {
+    return sendPasswordResetEmail(this.auth, email.trim(), {
+      url: `${environment.siteUrl.replace(/\/$/, '')}/login`,
+    });
+  }
+
   async register(name: string, email: string, password: string, role: UserRole = 'client') {
     const credential = await createUserWithEmailAndPassword(this.auth, email, password);
     await updateProfile(credential.user, { displayName: name });
@@ -64,7 +71,7 @@ export class AuthService {
     return credential;
   }
 
-  /** Cria cliente sem deslogar o admin (app Auth secundário). */
+  /** Cria cliente sem deslogar o admin (app Auth secundario). */
   async createClientAccount(name: string, email: string, password: string): Promise<string> {
     let secondaryApp: FirebaseApp | null = null;
     try {
@@ -91,7 +98,7 @@ export class AuthService {
 
   async logout(): Promise<void> {
     await signOut(this.auth);
-    // Espera o Auth emitir null antes de navegar � evita precisar clicar em Sair 2 vezes.
+    // Espera o Auth emitir null antes de navegar  evita precisar clicar em Sair 2 vezes.
     await firstValueFrom(
       this.firebaseUser$.pipe(
         filter((user) => user === null),

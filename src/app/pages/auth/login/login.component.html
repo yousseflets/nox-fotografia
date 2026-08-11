@@ -6,65 +6,92 @@
       <a class="auth__brand" routerLink="/">
         <img src="/nox-logo.png" alt="NOX Fotografia" />
       </a>
-      <a class="auth__back" routerLink="/">← Voltar</a>
+      <a class="auth__back" routerLink="/">&larr; Voltar</a>
     </div>
 
-    <h1>Entrar</h1>
-    <p class="auth__sub">Acesse sua área de álbuns ou o painel administrativo.</p>
+    @if (mode() === 'login') {
+      <h1>Entrar</h1>
+      <p class="auth__sub">Acesse sua &aacute;rea de &aacute;lbuns ou o painel administrativo.</p>
+    } @else {
+      <h1>Recuperar senha</h1>
+      <p class="auth__sub">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
+    }
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="form-field">
         <label for="email">E-mail</label>
         <input id="email" type="email" formControlName="email" autocomplete="email" />
       </div>
-      <div class="form-field">
-        <label for="password">Senha</label>
-        <div class="password-field">
-          <input
-            id="password"
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
-            autocomplete="current-password"
-          />
-          <button
-            type="button"
-            class="password-toggle"
-            (click)="togglePassword()"
-            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-            [attr.aria-pressed]="showPassword()"
-          >
-            @if (showPassword()) {
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 6c-5 0-9.3 3.1-11 7.5C2.7 17.9 7 21 12 21s9.3-3.1 11-7.5C21.3 9.1 17 6 12 6zm0 12.5c-3.6 0-6.8-2.1-8.4-5.5C5.2 9.6 8.4 7.5 12 7.5s6.8 2.1 8.4 5.5c-1.6 3.4-4.8 5.5-8.4 5.5zM12 9a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 7.2a2.7 2.7 0 110-5.4 2.7 2.7 0 010 5.4z"
-                />
-                <path fill="currentColor" d="M3.3 3.3L20.7 20.7l-1.4 1.4L1.9 4.7z" />
-              </svg>
-            } @else {
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M12 6c-5 0-9.3 3.1-11 7.5C2.7 17.9 7 21 12 21s9.3-3.1 11-7.5C21.3 9.1 17 6 12 6zm0 12.5c-3.6 0-6.8-2.1-8.4-5.5C5.2 9.6 8.4 7.5 12 7.5s6.8 2.1 8.4 5.5c-1.6 3.4-4.8 5.5-8.4 5.5zM12 9a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 7.2a2.7 2.7 0 110-5.4 2.7 2.7 0 010 5.4z"
-                />
-              </svg>
-            }
-          </button>
+
+      @if (mode() === 'login') {
+        <div class="form-field">
+          <div class="auth__label-row">
+            <label for="password">Senha</label>
+            <button type="button" class="auth__forgot" (click)="openForgot()">
+              Esqueci a senha
+            </button>
+          </div>
+          <div class="password-field">
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePassword()"
+              [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+              [attr.aria-pressed]="showPassword()"
+            >
+              @if (showPassword()) {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 6c-5 0-9.3 3.1-11 7.5C2.7 17.9 7 21 12 21s9.3-3.1 11-7.5C21.3 9.1 17 6 12 6zm0 12.5c-3.6 0-6.8-2.1-8.4-5.5C5.2 9.6 8.4 7.5 12 7.5s6.8 2.1 8.4 5.5c-1.6 3.4-4.8 5.5-8.4 5.5zM12 9a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 7.2a2.7 2.7 0 110-5.4 2.7 2.7 0 010 5.4z"
+                  />
+                  <path fill="currentColor" d="M3.3 3.3L20.7 20.7l-1.4 1.4L1.9 4.7z" />
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 6c-5 0-9.3 3.1-11 7.5C2.7 17.9 7 21 12 21s9.3-3.1 11-7.5C21.3 9.1 17 6 12 6zm0 12.5c-3.6 0-6.8-2.1-8.4-5.5C5.2 9.6 8.4 7.5 12 7.5s6.8 2.1 8.4 5.5c-1.6 3.4-4.8 5.5-8.4 5.5zM12 9a4.5 4.5 0 100 9 4.5 4.5 0 000-9zm0 7.2a2.7 2.7 0 110-5.4 2.7 2.7 0 010 5.4z"
+                  />
+                </svg>
+              }
+            </button>
+          </div>
         </div>
-      </div>
+      }
 
       @if (error()) {
         <p class="auth__error">{{ error() }}</p>
       }
+      @if (message()) {
+        <p class="auth__message">{{ message() }}</p>
+      }
 
       <button class="btn btn-primary auth__submit" type="submit" [disabled]="loading()">
-        {{ loading() ? 'Entrando...' : 'Entrar' }}
+        @if (mode() === 'login') {
+          {{ loading() ? 'Entrando...' : 'Entrar' }}
+        } @else {
+          {{ loading() ? 'Enviando...' : 'Enviar link' }}
+        }
       </button>
     </form>
 
-    <p class="auth__footer">
-      Ainda não tem conta?
-      <a routerLink="/cadastro">Cadastre-se</a>
-    </p>
+    @if (mode() === 'login') {
+      <p class="auth__footer">
+        Ainda n&atilde;o tem conta?
+        <a routerLink="/cadastro">Cadastre-se</a>
+      </p>
+    } @else {
+      <p class="auth__footer">
+        Lembrou a senha?
+        <button type="button" class="auth__link-btn" (click)="backToLogin()">Voltar ao login</button>
+      </p>
+    }
   </div>
 </section>
