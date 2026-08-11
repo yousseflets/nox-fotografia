@@ -1,18 +1,23 @@
 <section class="auth">
   <div class="auth__bg" aria-hidden="true"></div>
 
-  <div class="auth__card panel">
+  <div class="auth__card">
+    <div class="auth__accent" aria-hidden="true"></div>
+
     <div class="auth__top">
-      <a class="auth__brand" routerLink="/">
-        <img src="/nox-logo.png" alt="NOX Fotografia" />
-      </a>
       <a class="auth__back" routerLink="/">&larr; Voltar</a>
     </div>
 
+    <a class="auth__brand" routerLink="/">
+      <img src="/nox-logo.png" alt="NOX Fotografia" />
+    </a>
+
     @if (mode() === 'login') {
+      <p class="auth__kicker">&Aacute;rea do cliente</p>
       <h1>Entrar</h1>
-      <p class="auth__sub">Acesse sua &aacute;rea de &aacute;lbuns ou o painel administrativo.</p>
+      <p class="auth__sub">Acesse seus &aacute;lbuns ou o painel administrativo.</p>
     } @else {
+      <p class="auth__kicker">Conta</p>
       <h1>Recuperar senha</h1>
       <p class="auth__sub">Informe seu e-mail e enviaremos um link para criar uma nova senha.</p>
     }
@@ -20,7 +25,7 @@
     <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="form-field">
         <label for="email">E-mail</label>
-        <input id="email" type="email" formControlName="email" autocomplete="email" />
+        <input id="email" type="email" formControlName="email" autocomplete="email" placeholder="seu@email.com" />
       </div>
 
       @if (mode() === 'login') {

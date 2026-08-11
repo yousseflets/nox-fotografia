@@ -13,11 +13,10 @@
   position: absolute;
   inset: -2rem;
   z-index: 0;
-  background:
-    url('/nox-logo.png') center / cover no-repeat;
-  filter: blur(12px) brightness(0.72) saturate(1.1);
-  transform: scale(1.08);
-  opacity: 0.85;
+  background: url('/nox-logo.png') center / cover no-repeat;
+  filter: blur(16px) brightness(0.55) saturate(1.05);
+  transform: scale(1.1);
+  opacity: 0.7;
   pointer-events: none;
 }
 
@@ -26,44 +25,54 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.55) 75%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4));
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.72) 72%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.55));
 }
 
 .auth__card {
   position: relative;
   z-index: 1;
-  width: min(100%, 26rem);
-  background: rgba(12, 12, 12, 0.82);
-  backdrop-filter: blur(8px);
+  width: min(100%, 26.5rem);
+  overflow: hidden;
+  padding: 1.75rem 1.75rem 1.85rem;
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.94), rgba(8, 8, 8, 0.96));
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+.auth__accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--nox-gold);
 }
 
 .auth__top {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  justify-content: flex-end;
+  margin-bottom: 0.35rem;
 }
 
 .auth__brand {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  justify-content: center;
+  margin: 0.15rem 0 1.15rem;
 }
 
 .auth__brand img {
-  height: 3.5rem;
+  height: 6.25rem;
   width: auto;
   object-fit: contain;
 }
 
 .auth__back {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
   color: var(--nox-gold);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   transition: color 0.2s ease;
 }
@@ -72,38 +81,74 @@
   color: var(--nox-gold-bright);
 }
 
-h1 {
+.auth__kicker {
+  text-align: center;
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
   color: var(--nox-gold);
-  font-size: 2.2rem;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
+  margin-bottom: 0.45rem;
+}
+
+h1 {
+  text-align: center;
+  color: var(--nox-gold);
+  font-size: clamp(2rem, 4vw, 2.45rem);
+  margin-bottom: 0.4rem;
 }
 
 .auth__sub {
+  text-align: center;
   color: var(--nox-muted);
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.6rem;
+  line-height: 1.55;
+}
+
+.form-field input {
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .auth__submit {
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: 0.65rem;
+  border-radius: 999px;
+  min-height: 3rem;
+}
+
+.auth__error,
+.auth__message {
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .auth__error {
   color: #e8a0a0;
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
+}
+
+.auth__message {
+  color: #b8d4a8;
 }
 
 .auth__footer {
-  margin-top: 1.5rem;
+  margin-top: 1.45rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.16);
   text-align: center;
   color: var(--nox-muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .auth__footer a {
   color: var(--nox-gold);
   margin-left: 0.25rem;
+}
+
+.auth__footer a:hover {
+  color: var(--nox-gold-bright);
 }
 
 .password-field {
@@ -167,13 +212,6 @@ h1 {
 
 .auth__forgot:hover {
   color: var(--nox-gold-bright);
-}
-
-.auth__message {
-  color: #b8d4a8;
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
-  line-height: 1.45;
 }
 
 .auth__link-btn {
