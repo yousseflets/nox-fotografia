@@ -1,12 +1,13 @@
 <section class="page">
   <header>
+    <p class="page-kicker">Cadastro</p>
     <h1>Clientes</h1>
     <p>Cadastre clientes e associe álbuns depois.</p>
   </header>
 
   <div class="grid">
     <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
-      <h2>{{ editingUid() ? 'Novo cliente' : 'Novo cliente' }}</h2>
+      <h2>{{ editingUid() ? 'Editar cliente' : 'Novo cliente' }}</h2>
       <div class="form-field">
         <label for="name">Nome</label>
         <input id="name" formControlName="name" />

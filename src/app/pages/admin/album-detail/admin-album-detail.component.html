@@ -4,6 +4,7 @@
   @if (album$ | async; as album) {
     <header class="page-head">
       <div>
+        <p class="page-kicker">Álbum</p>
         <h1>{{ album.title }}</h1>
         <p>Cliente: {{ album.clientName || album.clientId }}</p>
       </div>

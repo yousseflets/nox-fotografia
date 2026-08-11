@@ -1,6 +1,7 @@
 <section class="page">
   <header>
-    <h1>Categorias do portfólio</h1>
+    <p class="page-kicker">Portfólio</p>
+    <h1>Categorias</h1>
     <p>Defina as opções da home (Casamentos, Ensaios, etc.).</p>
   </header>
 
@@ -18,7 +19,7 @@
         <input id="title" formControlName="title" placeholder="Casamentos" />
       </div>
       <div class="form-field">
-        <label for="icon">Ýcone</label>
+        <label for="icon">Ícone</label>
         <select id="icon" formControlName="icon">
           @for (opt of iconOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>

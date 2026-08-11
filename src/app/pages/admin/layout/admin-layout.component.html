@@ -1,4 +1,4 @@
-<div class="shell">
+<div class="shell admin-shell">
   <aside class="sidebar">
     <a class="sidebar__brand" routerLink="/">
       <img src="/nox-logo.png" alt="NOX Fotografia" />
@@ -6,10 +6,30 @@
     </a>
     <nav>
       <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.6"/>
+          <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.6"/>
+          <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.6"/>
+          <rect x="13" y="13" width="7.5" height="7.5" rx="1.6"/>
+        </svg>
         Dashboard
       </a>
-      <a routerLink="/admin/clientes" routerLinkActive="active">Clientes</a>
-      <a routerLink="/admin/albuns" routerLinkActive="active">Álbuns</a>
+      <a routerLink="/admin/clientes" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <circle cx="9" cy="8" r="3.2"/>
+          <path stroke-linecap="round" d="M4.5 19c.7-3.2 2.7-5 4.5-5s3.8 1.8 4.5 5"/>
+          <circle cx="16.5" cy="8.5" r="2.4"/>
+          <path stroke-linecap="round" d="M15.2 19c.4-2.2 1.7-3.5 3.3-3.5 1.2 0 2.2.7 2.8 2"/>
+        </svg>
+        Clientes
+      </a>
+      <a routerLink="/admin/albuns" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="14" rx="2"/>
+          <path d="M4 9h16"/>
+        </svg>
+        &Aacute;lbuns
+      </a>
 
       <div
         class="nav-group"
@@ -22,16 +42,22 @@
           (click)="toggleConfig()"
           [attr.aria-expanded]="configOpen()"
         >
-          <span>Configuração</span>
-          <span class="nav-group__chevron" aria-hidden="true">›</span>
+          <span class="nav-group__label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 4.5v1.6M12 17.9v1.6M4.5 12h1.6M17.9 12h1.6M6.4 6.4l1.1 1.1M16.5 16.5l1.1 1.1M17.6 6.4l-1.1 1.1M7.5 16.5l-1.1 1.1"/>
+            </svg>
+            Configura&ccedil;&atilde;o
+          </span>
+          <span class="nav-group__chevron" aria-hidden="true">&rsaquo;</span>
         </button>
 
         @if (configOpen()) {
           <div class="nav-group__items">
             <a routerLink="/admin/depoimentos" routerLinkActive="active">Depoimentos</a>
             <a routerLink="/admin/galeria" routerLinkActive="active">Galeria</a>
-            <a routerLink="/admin/portfolio-categorias" routerLinkActive="active">Portfólio (categorias)</a>
-            <a routerLink="/admin/portfolio-fotos" routerLinkActive="active">Portfólio (fotos)</a>
+            <a routerLink="/admin/portfolio-categorias" routerLinkActive="active">Portf&oacute;lio (categorias)</a>
+            <a routerLink="/admin/portfolio-fotos" routerLinkActive="active">Portf&oacute;lio (fotos)</a>
           </div>
         }
       </div>

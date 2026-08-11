@@ -256,3 +256,74 @@ p {
     --container: min(100% - 1.5rem, 1180px);
   }
 }
+
+/* Admin chrome (todas as paginas /admin) */
+.admin-shell .content .page {
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.admin-shell .page-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--nox-gold);
+  font-weight: 500;
+  margin-bottom: 0.55rem;
+}
+
+.admin-shell .page h1 {
+  color: var(--nox-gold);
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  margin-bottom: 0.45rem;
+}
+
+.admin-shell .page > header,
+.admin-shell .page-head {
+  margin-bottom: 1.75rem;
+}
+
+.admin-shell .page > header p,
+.admin-shell .page-head p {
+  color: var(--nox-muted);
+  max-width: 38rem;
+}
+
+.admin-shell .panel {
+  background: linear-gradient(180deg, rgba(20, 20, 20, 0.96), rgba(8, 8, 8, 0.96));
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 16px;
+}
+
+.admin-shell .panel h2 {
+  color: var(--nox-gold);
+  margin-bottom: 1rem;
+  font-size: 1.35rem;
+}
+
+.admin-shell .btn {
+  border-radius: 999px;
+}
+
+.admin-shell .form-field input,
+.admin-shell .form-field textarea,
+.admin-shell .form-field select {
+  border-radius: 10px;
+}
+
+.admin-shell .back {
+  display: inline-flex;
+  color: var(--nox-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.admin-shell .ok {
+  color: #9fd4a5;
+}
+
+.admin-shell .err {
+  color: #e8a0a0;
+}
+

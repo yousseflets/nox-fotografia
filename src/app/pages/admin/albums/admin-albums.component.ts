@@ -60,7 +60,7 @@ export class AdminAlbumsComponent {
       let mailNote = '';
       if (value.notifyClient) {
         if (!client?.email) {
-          mailNote = ' Álbum criado, mas o cliente não tem e-mail cadastrado.';
+          mailNote = ' Ýlbum criado, mas o cliente não tem e-mail cadastrado.';
         } else {
           try {
             await this.mail.notifyAlbumAvailable({
@@ -75,12 +75,12 @@ export class AdminAlbumsComponent {
               err instanceof Error && err.message
                 ? err.message
                 : 'Confira a extensão Trigger Email e as rules da coleção mail.';
-            mailNote = ` Álbum criado, mas o e-mail não pôde ser enfileirado. ${detail}`;
+            mailNote = ` Ýlbum criado, mas o e-mail não pôde ser enfileirado. ${detail}`;
           }
         }
       }
 
-      this.message.set('Álbum criado. Abra-o para enviar as fotos.' + mailNote);
+      this.message.set('Ýlbum criado. Abra-o para enviar as fotos.' + mailNote);
       this.form.reset({ title: '', clientId: '', description: '', notifyClient: true });
     } catch {
       this.error.set('Não foi possível criar o álbum.');
@@ -105,7 +105,7 @@ export class AdminAlbumsComponent {
 
     try {
       await this.albums.deleteAlbum(album.id);
-      this.message.set('Álbum excluído.');
+      this.message.set('Ýlbum excluído.');
     } catch {
       this.error.set('Não foi possível excluir o álbum.');
     } finally {

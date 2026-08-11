@@ -1,12 +1,12 @@
 .shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 260px 1fr;
 }
 
 .sidebar {
-  background: var(--nox-black-soft);
-  border-right: 1px solid var(--nox-border);
+  background: linear-gradient(180deg, #0c0c0c, #070707);
+  border-right: 1px solid rgba(212, 175, 55, 0.18);
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
@@ -22,6 +22,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: 0.85rem;
+  padding: 0 0.35rem;
 }
 
 .sidebar__brand img {
@@ -33,17 +34,30 @@
 .sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .sidebar nav a,
 .nav-group__toggle {
-  padding: 0.75rem 0.85rem;
-  border-radius: 2px;
+  padding: 0.78rem 0.9rem;
+  border-radius: 10px;
   color: var(--nox-muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.72rem;
+}
+
+.sidebar nav > a,
+.nav-group__label {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.sidebar nav svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
 }
 
 .sidebar nav a.active,
@@ -51,7 +65,11 @@
 .nav-group__toggle:hover,
 .nav-group--active > .nav-group__toggle {
   color: var(--nox-gold);
-  background: rgba(201, 168, 76, 0.08);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.sidebar nav a.active {
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.28);
 }
 
 .nav-group__toggle {
@@ -89,7 +107,7 @@
   gap: 0.2rem;
   padding-left: 0.65rem;
   border-left: 1px solid rgba(201, 168, 76, 0.25);
-  margin: 0.2rem 0 0.35rem 0.85rem;
+  margin: 0.2rem 0 0.35rem 1.15rem;
 }
 
 .nav-group__items a {
@@ -100,16 +118,24 @@
   margin-top: auto;
   display: grid;
   gap: 0.75rem;
+  padding-top: 0.5rem;
 }
 
 .sidebar__footer p {
   color: var(--nox-muted);
   font-size: 0.9rem;
+  padding: 0 0.35rem;
+}
+
+.sidebar__footer .btn {
+  border-radius: 999px;
 }
 
 .content {
-  padding: 2rem;
-  background: var(--nox-black);
+  padding: 2.25rem 2rem;
+  background:
+    radial-gradient(ellipse at top left, rgba(212, 175, 55, 0.06), transparent 42%),
+    var(--nox-black);
 }
 
 @media (max-width: 800px) {

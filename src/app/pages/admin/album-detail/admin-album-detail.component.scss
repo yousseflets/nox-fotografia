@@ -1,12 +1,4 @@
-.back {
-  color: var(--nox-gold);
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-}
-
-.page header,
 .page-head {
-  margin: 1rem 0 1.75rem;
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -14,25 +6,14 @@
   flex-wrap: wrap;
 }
 
-.page h1 {
-  color: var(--nox-gold);
-  font-size: 2.1rem;
-}
-
-.page header p,
-.upload p,
-.empty,
-.msg {
-  color: var(--nox-muted);
-}
-
 .upload {
   margin-bottom: 1.75rem;
 }
 
-.upload h2 {
-  color: var(--nox-gold);
-  margin-bottom: 0.5rem;
+.upload p,
+.empty,
+.msg {
+  color: var(--nox-muted);
 }
 
 .file-btn {
@@ -66,7 +47,9 @@
 
 figure {
   margin: 0;
-  border: 1px solid var(--nox-border);
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 14px;
   background: var(--nox-surface);
   content-visibility: auto;
   contain-intrinsic-size: 240px;
@@ -93,6 +76,7 @@ figure {
   place-items: center;
   background: rgba(0, 0, 0, 0.72);
   border: 1px solid var(--nox-gold);
+  border-radius: 999px;
   color: var(--nox-gold);
   font-size: 0.7rem;
   font-weight: 500;
