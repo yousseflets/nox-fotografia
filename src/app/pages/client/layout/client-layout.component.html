@@ -1,13 +1,14 @@
-<div class="shell">
+<div class="shell client-shell">
   <header class="top">
-    <a class="brand" routerLink="/">
+    <a class="brand" routerLink="/cliente">
       <img src="/nox-logo.png" alt="NOX Fotografia" />
+      <span>&Aacute;rea do cliente</span>
     </a>
     <div class="top__right">
       @if (auth.user$ | async; as user) {
-        <span>Olá, {{ user.name }}</span>
+        <span>Ol&aacute;, {{ user.name }}</span>
       }
-      <a routerLink="/">Site</a>
+      <a class="top__link" routerLink="/">Site</a>
       <button class="btn btn-outline" type="button" (click)="logout()">Sair</button>
     </div>
   </header>

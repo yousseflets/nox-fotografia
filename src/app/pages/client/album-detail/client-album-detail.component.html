@@ -1,9 +1,10 @@
 <section class="page">
-  <a class="back" routerLink="/cliente">← Meus álbuns</a>
+  <a class="back" routerLink="/cliente">&larr; Meus &aacute;lbuns</a>
 
   @if (album$ | async; as album) {
-    <header>
+    <header class="page-head">
       <div>
+        <p class="page-kicker">&Aacute;lbum</p>
         <h1>{{ album.title }}</h1>
         @if (album.description) {
           <p>{{ album.description }}</p>
@@ -57,12 +58,12 @@
         </figure>
       } @empty {
         @if (photosReady()) {
-          <aside class="empty-hero" aria-label="Álbum ainda sem fotos">
+          <aside class="empty-hero" aria-label="&Aacute;lbum ainda sem fotos">
             <img
               src="/album-vazio.jpg"
               width="900"
               height="1200"
-              alt="Em breve teremos cliques incríveis nessa galeria!"
+              alt="Em breve teremos cliques incr&iacute;veis nessa galeria!"
             />
           </aside>
         }
@@ -70,7 +71,7 @@
     </div>
 
     @if (showPager()) {
-      <nav class="pager" aria-label="Paginação das fotos">
+      <nav class="pager" aria-label="Pagina&ccedil;&atilde;o das fotos">
         <button
           type="button"
           class="btn btn-outline btn-sm"
@@ -79,18 +80,18 @@
         >
           Anterior
         </button>
-        <span class="pager__info">Página {{ page() }} de {{ pageCount() }}</span>
+        <span class="pager__info">P&aacute;gina {{ page() }} de {{ pageCount() }}</span>
         <button
           type="button"
           class="btn btn-outline btn-sm"
           [disabled]="page() >= pageCount()"
           (click)="goToPage(page() + 1)"
         >
-          Próxima
+          Pr&oacute;xima
         </button>
       </nav>
     }
   } @else {
-    <p class="empty">Álbum não encontrado ou sem permissão de acesso.</p>
+    <p class="empty">&Aacute;lbum n&atilde;o encontrado ou sem permiss&atilde;o de acesso.</p>
   }
 </section>

@@ -1,12 +1,13 @@
 <section class="page">
   <header>
-    <h1>Meus álbuns</h1>
-    <p>Você vê apenas os ensaios associados à sua conta.</p>
+    <p class="page-kicker">Galeria</p>
+    <h1>Meus &aacute;lbuns</h1>
+    <p>Voc&ecirc; v&ecirc; apenas os ensaios associados &agrave; sua conta.</p>
   </header>
 
   <div class="grid">
     @for (album of albums$ | async; track album.id) {
-      <a class="album panel" [routerLink]="['/cliente/album', album.id]">
+      <a class="album" [routerLink]="['/cliente/album', album.id]">
         <div class="album__cover">
           @if (album.coverUrl) {
             <img [src]="album.coverUrl" [alt]="album.title" loading="lazy" />
@@ -18,7 +19,7 @@
         </div>
       </a>
     } @empty {
-      <p class="empty panel">Nenhum álbum disponível no momento.</p>
+      <p class="empty">Nenhum &aacute;lbum dispon&iacute;vel no momento.</p>
     }
   </div>
 </section>

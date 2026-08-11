@@ -1,9 +1,26 @@
-.back {
-  color: var(--nox-gold);
-  font-size: 0.85rem;
+.page {
+  max-width: 72rem;
+  margin-inline: auto;
 }
 
-.page header {
+.back {
+  display: inline-flex;
+  color: var(--nox-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.page-kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--nox-gold);
+  font-weight: 500;
+  margin-bottom: 0.45rem;
+}
+
+.page-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -14,13 +31,17 @@
 
 .page h1 {
   color: var(--nox-gold);
-  font-size: 2.1rem;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  margin-bottom: 0.35rem;
 }
 
-.page header p,
+.page-head p,
 .empty {
   color: var(--nox-muted);
-  margin-top: 0.35rem;
+}
+
+.page-head .btn {
+  border-radius: 999px;
 }
 
 .gallery {
@@ -37,9 +58,10 @@
   margin: 0 auto;
   max-width: 28rem;
   width: 100%;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  background: #0a0a0a;
   overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 16px;
+  background: #0a0a0a;
 }
 
 .empty-hero img {
@@ -50,7 +72,9 @@
 
 figure {
   margin: 0;
-  border: 1px solid var(--nox-border);
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 14px;
   background: var(--nox-surface);
   content-visibility: auto;
   contain-intrinsic-size: 260px;
@@ -77,6 +101,7 @@ figure {
   place-items: center;
   background: rgba(0, 0, 0, 0.72);
   border: 1px solid var(--nox-gold);
+  border-radius: 999px;
   color: var(--nox-gold);
   font-size: 0.7rem;
   font-weight: 500;
@@ -111,7 +136,7 @@ figcaption {
   justify-content: space-between;
   gap: 0.5rem;
   align-items: center;
-  padding: 0.65rem 0.75rem;
+  padding: 0.7rem 0.8rem;
   font-size: 0.75rem;
   color: var(--nox-muted);
 }
@@ -129,6 +154,10 @@ figcaption span {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+.pager .btn {
+  border-radius: 999px;
 }
 
 .pager__info {
