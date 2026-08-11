@@ -29,6 +29,14 @@ export class LoginComponent {
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
+  constructor() {
+    if (this.route.snapshot.queryParamMap.get('idle') === '1') {
+      this.message.set(
+        'Sess\u00e3o encerrada ap\u00f3s 1 hora sem uso. Entre novamente para continuar.'
+      );
+    }
+  }
+
   togglePassword() {
     this.showPassword.update((v) => !v);
   }

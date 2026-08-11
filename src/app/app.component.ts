@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { IdleTimeoutService } from './core/services/idle-timeout.service';
 
 @Component({
   selector: 'app-root',
@@ -15,4 +16,6 @@ import { RouterOutlet } from '@angular/router';
     `,
   ],
 })
-export class AppComponent {}
+export class AppComponent {
+  private readonly idle = inject(IdleTimeoutService);
+}
