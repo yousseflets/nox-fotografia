@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  siteUrl: 'https://nox-fotografia.com.br',
+  siteUrl: 'https://www.nox-fotografia.com.br',
   firebase: {
     apiKey: 'AIzaSyCGNfuitrjjJz_MvcWRqq0g6vzjtu8qrb0',
     authDomain: 'nox-fotografia.firebaseapp.com',

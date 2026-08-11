@@ -1,3 +1,8 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/:path((?!.*\\.[A-Za-z0-9]+$).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
