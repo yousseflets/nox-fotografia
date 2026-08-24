@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   siteUrl: 'https://www.nox-fotografia.com.br',
+  infinitePayHandle: 'thaisroza',
   pix: {
     key: 'thataroza@gmail.com',
     merchantName: 'NOX Fotografia',

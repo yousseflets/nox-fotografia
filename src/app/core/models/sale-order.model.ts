@@ -1,4 +1,5 @@
 export type SalePaymentMethod = 'pix' | 'credit_card';
+export type SalePaymentProvider = 'manual_pix' | 'infinitepay' | 'mercadopago';
 export type SaleOrderStatus = 'pending' | 'paid' | 'cancelled' | 'failed';
 
 export const SALE_ORDER_STATUS_LABELS: Record<SaleOrderStatus, string> = {
@@ -35,10 +36,14 @@ export interface SaleOrder {
   items: SaleOrderItem[];
   buyer: SaleOrderBuyer;
   paymentMethod: SalePaymentMethod;
+  paymentProvider?: SalePaymentProvider;
   status: SaleOrderStatus;
   totalCents: number;
   mpPreferenceId?: string;
   mpPaymentId?: string;
+  ipSlug?: string;
+  ipTransactionNsu?: string;
+  checkoutUrl?: string;
   accessToken?: string;
   createdAt: string;
   paidAt?: string;

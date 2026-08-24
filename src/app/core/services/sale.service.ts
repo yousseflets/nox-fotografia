@@ -294,6 +294,33 @@ export class SaleService {
     return { orderId: orderRef.id, accessToken };
   }
 
+  async createInfinitePayCheckout(input: {
+    eventId: string;
+    photoIds: string[];
+    buyer: SaleOrderBuyer;
+  }): Promise<{ orderId: string; accessToken: string; checkoutUrl: string }> {
+    const callable = httpsCallable<
+      typeof input,
+      { orderId: string; accessToken: string; checkoutUrl: string }
+    >(this.functions, 'createInfinitePayCheckout');
+    const result = await callable(input);
+    return result.data;
+  }
+
+  async syncInfinitePayPayment(input: {
+    orderId: string;
+    accessToken: string;
+    slug?: string;
+    transactionNsu?: string;
+  }): Promise<{ paid: boolean }> {
+    const callable = httpsCallable<
+      typeof input,
+      { paid: boolean }
+    >(this.functions, 'syncInfinitePayPayment');
+    const result = await callable(input);
+    return result.data;
+  }
+
   async createCheckout(input: {
     eventId: string;
     photoIds: string[];

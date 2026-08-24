@@ -8,6 +8,7 @@
       <p class="kicker">Pedido</p>
       <h1>
         @if (order.status === 'paid') { Pagamento aprovado }
+        @else if (isInfinitePayPending()) { Aguardando pagamento }
         @else if (order.status === 'pending') { Pague com Pix }
         @else { Pedido {{ order.status }} }
       </h1>
@@ -22,7 +23,18 @@
           <ul>
             @for (file of downloads(); track file.url) {
               <li>
-                <a [href]="file.url" target="_blank" rel="noopener" download>{{ file.filename }}</a>
+                <button
+                  type="button"
+                  class="download-link"
+                  [disabled]="downloadingFilename() === file.filename"
+                  (click)="downloadFile(file)"
+                >
+                  @if (downloadingFilename() === file.filename) {
+                    Baixando...
+                  } @else {
+                    {{ file.filename }}
+                  }
+                </button>
               </li>
             }
           </ul>
@@ -31,10 +43,32 @@
             {{ loadingDownloads() ? 'Carregando...' : 'Liberar downloads' }}
           </button>
           @if (error()) { <p class="err">{{ error() }}</p> }
-          <p class="pix-note">Se acabou de pagar, aguarde a confirma&ccedil;&atilde;o da NOX e atualize esta p&aacute;gina.</p>
+          <p class="pix-note">Ap&oacute;s a confirma&ccedil;&atilde;o, os downloads aparecem automaticamente.</p>
         }
       </div>
-    } @else if (order.status === 'pending') {
+    } @else if (isInfinitePayPending()) {
+      <div class="panel">
+        @if (syncingPayment()) {
+          <p>Confirmando pagamento...</p>
+        } @else {
+          <p>Pagamento em processamento. Se voc&ecirc; j&aacute; pagou, clique abaixo para confirmar.</p>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="syncingPayment()"
+            (click)="syncPaymentIfNeeded()"
+          >
+            {{ syncingPayment() ? 'Confirmando...' : 'J\u00e1 paguei' }}
+          </button>
+          @if (order.checkoutUrl) {
+            <a class="btn btn-primary" [href]="order.checkoutUrl" target="_blank" rel="noopener">
+              Voltar ao pagamento
+            </a>
+          }
+        }
+        @if (error()) { <p class="err">{{ error() }}</p> }
+      </div>
+    } @else if (isManualPix()) {
       <div class="panel pix-panel">
         <p class="pix-lead">Escaneie o QR Code ou copie o Pix abaixo para pagar.</p>
         <p class="pix-amount">{{ formatPrice(order.totalCents) }}</p>

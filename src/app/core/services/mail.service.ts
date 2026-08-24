@@ -23,6 +23,7 @@ export type OrderPaidMailInput = {
 
 const SITE_BASE = environment.siteUrl.replace(/\/$/, '');
 const LOGO_CID = 'cid:nox-logo';
+const LOGO_URL = LOGO_CID;
 const WHATSAPP = '(11) 98927-3898';
 const WHATSAPP_URL = 'https://wa.me/5511989273898';
 
@@ -63,7 +64,7 @@ export class MailService {
       name: escapeHtml(name),
       areaUrl: escapeHtml(areaUrl),
       loginUrl: escapeHtml(loginUrl),
-      logoUrl: LOGO_CID,
+      logoUrl: LOGO_URL,
       siteUrl: escapeHtml(SITE_BASE),
       whatsapp: escapeHtml(WHATSAPP),
       whatsappUrl: escapeHtml(WHATSAPP_URL),
@@ -105,7 +106,7 @@ export class MailService {
     }
   }
 
-  /** E-mail de pagamento confirmado (fotos à venda). */
+  /** E-mail de pagamento confirmado (fotos Ã  venda). */
   async notifyOrderPaid(input: OrderPaidMailInput): Promise<void> {
     const to = input.to.trim();
     if (!to) return;
@@ -134,7 +135,7 @@ export class MailService {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#141414;border:1px solid #d4af37;border-radius:12px;padding:28px;">
         <tr><td align="center" style="padding-bottom:16px;">
-          <img src="${LOGO_CID}" alt="NOX Fotografia" width="120" style="display:block;" />
+          <img src="${LOGO_URL}" alt="NOX Fotografia" width="120" style="display:block;" />
         </td></tr>
         <tr><td style="color:#d4af37;font-size:22px;padding-bottom:12px;">Pagamento confirmado</td></tr>
         <tr><td style="color:#f5f0e6;font-size:16px;line-height:1.5;padding-bottom:12px;">

@@ -1,19 +1,22 @@
 import { randomBytes, timingSafeEqual } from 'crypto';
 import { initializeApp } from 'firebase-admin/app';
-import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore, Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret, defineString } from 'firebase-functions/params';
+import { defineString } from 'firebase-functions/params';
 import { setGlobalOptions } from 'firebase-functions/v2';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
 initializeApp();
 setGlobalOptions({ region: 'us-central1' });
 
-const mpAccessToken = defineSecret('MP_ACCESS_TOKEN');
 const siteUrl = defineString('SITE_URL', {
   default: 'https://www.nox-fotografia.com.br',
 });
+const infinitePayHandle = defineString('INFINITEPAY_HANDLE', {
+  default: 'thaisroza',
+});
+
+const INFINITE_PAY_API = 'https://api.checkout.infinitepay.io';
 
 type Buyer = { name: string; email: string; phone: string; cpf: string };
 type PaymentMethod = 'pix' | 'credit_card';
@@ -22,7 +25,15 @@ type CheckoutInput = {
   eventId: string;
   photoIds: string[];
   buyer: Buyer;
-  paymentMethod: PaymentMethod;
+  paymentMethod?: PaymentMethod;
+};
+
+type OrderItem = {
+  photoId: string;
+  eventId: string;
+  filename: string;
+  previewUrl: string;
+  priceCents: number;
 };
 
 function formatPriceBRL(cents: number): string {
@@ -37,231 +48,399 @@ function newAccessToken(): string {
   return randomBytes(24).toString('hex');
 }
 
-function mpClient(token: string) {
-  return new MercadoPagoConfig({ accessToken: token });
+function formatPhoneBR(phone: string): string {
+  const digits = onlyDigits(phone);
+  if (digits.startsWith('55') && digits.length >= 12) return `+${digits}`;
+  if (digits.length >= 10) return `+55${digits}`;
+  return `+55${digits}`;
 }
 
-export const createSaleCheckout = onCall(
-  { secrets: [mpAccessToken], cors: true },
-  async (request) => {
-    const data = request.data as CheckoutInput;
-    const eventId = String(data?.eventId || '').trim();
-    const photoIds = Array.isArray(data?.photoIds)
-      ? [...new Set(data.photoIds.map((id) => String(id).trim()).filter(Boolean))]
-      : [];
-    const buyer = data?.buyer;
-    const paymentMethod = data?.paymentMethod === 'credit_card' ? 'credit_card' : 'pix';
+function webhookBaseUrl(): string {
+  return `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net`;
+}
 
-    if (!eventId || !photoIds.length) {
-      throw new HttpsError('invalid-argument', 'Evento e fotos sao obrigatorios.');
+async function loadOrderItems(
+  db: Firestore,
+  eventId: string,
+  photoIds: string[],
+  priceCents: number
+): Promise<{ items: OrderItem[]; eventTitle: string }> {
+  const eventSnap = await db.doc(`saleEvents/${eventId}`).get();
+  if (!eventSnap.exists) {
+    throw new HttpsError('not-found', 'Evento nao encontrado.');
+  }
+  const event = eventSnap.data()!;
+  if (!event['active']) {
+    throw new HttpsError('failed-precondition', 'Evento indisponivel.');
+  }
+  if (!Number.isFinite(priceCents) || priceCents < 1) {
+    throw new HttpsError('failed-precondition', 'Preco do evento invalido.');
+  }
+
+  const photoSnaps = await Promise.all(
+    photoIds.map((id) => db.doc(`salePhotos/${id}`).get())
+  );
+  const items: OrderItem[] = photoSnaps.map((snap, i) => {
+    if (!snap.exists) {
+      throw new HttpsError('not-found', `Foto nao encontrada: ${photoIds[i]}`);
     }
-    if (!buyer?.name?.trim() || !buyer?.email?.trim() || !buyer?.phone?.trim()) {
-      throw new HttpsError('invalid-argument', 'Dados do comprador incompletos.');
+    const photo = snap.data() as Record<string, unknown>;
+    if (photo['eventId'] !== eventId) {
+      throw new HttpsError('invalid-argument', 'Foto nao pertence ao evento.');
     }
-    const cpf = onlyDigits(buyer.cpf || '');
-    if (cpf.length < 11) {
-      throw new HttpsError('invalid-argument', 'CPF invalido.');
+    return {
+      photoId: snap.id,
+      eventId,
+      filename: String(photo['filename'] || snap.id),
+      previewUrl: String(photo['thumbUrl'] || photo['previewUrl'] || ''),
+      priceCents,
+    };
+  });
+
+  return { items, eventTitle: String(event['title'] || '') };
+}
+
+async function getStorageDownloadUrl(storagePath: string): Promise<string> {
+  const bucket = getStorage().bucket();
+  const file = bucket.file(storagePath);
+  const [metadata] = await file.getMetadata();
+  const meta = (metadata.metadata || {}) as Record<string, string>;
+  let token = String(meta.firebaseStorageDownloadTokens || '').split(',')[0].trim();
+  if (!token) {
+    token = randomBytes(16).toString('hex');
+    await file.setMetadata({
+      metadata: { ...meta, firebaseStorageDownloadTokens: token },
+    });
+  }
+  const encoded = encodeURIComponent(storagePath);
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encoded}?alt=media&token=${token}`;
+}
+
+async function buildDownloadFiles(
+  db: Firestore,
+  order: FirebaseFirestore.DocumentData
+): Promise<{ filename: string; url: string }[]> {
+  const items = Array.isArray(order['items']) ? order['items'] : [];
+  const files: { filename: string; url: string }[] = [];
+
+  for (const item of items) {
+    const photoId = String(item?.photoId || '');
+    if (!photoId) continue;
+    const photoSnap = await db.doc(`salePhotos/${photoId}`).get();
+    if (!photoSnap.exists) continue;
+    const photo = photoSnap.data()!;
+    const storagePath = String(photo['storagePath'] || '');
+    const filename = String(photo['filename'] || item.filename || photoId);
+    if (!storagePath) continue;
+
+    const url = await getStorageDownloadUrl(storagePath);
+    files.push({ filename, url });
+  }
+
+  return files;
+}
+
+async function fulfillOrderDownloads(
+  db: Firestore,
+  orderId: string,
+  order: FirebaseFirestore.DocumentData
+): Promise<{ filename: string; url: string }[]> {
+  const existing = Array.isArray(order['downloadFiles']) ? order['downloadFiles'] : [];
+  if (existing.length) {
+    return existing as { filename: string; url: string }[];
+  }
+
+  const files = await buildDownloadFiles(db, order);
+  if (files.length) {
+    await db.doc(`orders/${orderId}`).update({ downloadFiles: files });
+  }
+  return files;
+}
+
+async function markOrderPaidAndFulfill(
+  orderId: string,
+  extra: Record<string, unknown>
+): Promise<boolean> {
+  const db = getFirestore();
+  const orderRef = db.doc(`orders/${orderId}`);
+  const orderSnap = await orderRef.get();
+  if (!orderSnap.exists) return false;
+
+  const order = orderSnap.data()!;
+  const alreadyPaid = order['status'] === 'paid';
+
+  if (!alreadyPaid) {
+    await orderRef.update({
+      status: 'paid',
+      paidAt: new Date().toISOString(),
+      updatedAt: FieldValue.serverTimestamp(),
+      ...extra,
+    });
+  } else if (Object.keys(extra).length) {
+    await orderRef.update({ ...extra, updatedAt: FieldValue.serverTimestamp() });
+  }
+
+  const freshSnap = await orderRef.get();
+  const fresh = freshSnap.data()!;
+  await fulfillOrderDownloads(db, orderId, fresh);
+
+  if (!alreadyPaid) {
+    const buyer = (order['buyer'] || {}) as { email?: string; name?: string };
+    await enqueuePaidEmail({
+      to: String(buyer.email || ''),
+      name: String(buyer.name || ''),
+      eventTitle: String(order['eventTitle'] || ''),
+      orderId,
+      accessToken: String(order['accessToken'] || ''),
+      totalCents: Number(order['totalCents'] || 0),
+    });
+  }
+
+  return true;
+}
+
+async function createInfinitePayLink(body: Record<string, unknown>): Promise<{
+  checkoutUrl: string;
+  slug?: string;
+}> {
+  const res = await fetch(`${INFINITE_PAY_API}/links`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) {
+    const message = String(data['message'] || 'Erro ao criar checkout InfinitePay.');
+    throw new HttpsError('failed-precondition', message);
+  }
+
+  const checkoutUrl = String(data['checkout_url'] || data['url'] || data['link'] || '');
+  if (!checkoutUrl) {
+    throw new HttpsError('internal', 'InfinitePay nao retornou link de checkout.');
+  }
+
+  return {
+    checkoutUrl,
+    slug: data['slug'] ? String(data['slug']) : undefined,
+  };
+}
+
+async function checkInfinitePayPayment(input: {
+  handle: string;
+  order_nsu: string;
+  transaction_nsu: string;
+  slug: string;
+}): Promise<{ paid: boolean; capture_method?: string }> {
+  const res = await fetch(`${INFINITE_PAY_API}/payment_check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok || !data['success']) {
+    return { paid: false };
+  }
+  return {
+    paid: !!data['paid'],
+    capture_method: data['capture_method'] ? String(data['capture_method']) : undefined,
+  };
+}
+
+function paymentMethodFromCapture(capture?: string): PaymentMethod {
+  return capture === 'credit_card' ? 'credit_card' : 'pix';
+}
+
+export const createInfinitePayCheckout = onCall({ cors: true }, async (request) => {
+  const data = request.data as CheckoutInput;
+  const eventId = String(data?.eventId || '').trim();
+  const photoIds = Array.isArray(data?.photoIds)
+    ? [...new Set(data.photoIds.map((id) => String(id).trim()).filter(Boolean))]
+    : [];
+  const buyer = data?.buyer;
+
+  if (!eventId || !photoIds.length) {
+    throw new HttpsError('invalid-argument', 'Evento e fotos sao obrigatorios.');
+  }
+  if (!buyer?.name?.trim() || !buyer?.email?.trim() || !buyer?.phone?.trim()) {
+    throw new HttpsError('invalid-argument', 'Dados do comprador incompletos.');
+  }
+  const cpf = onlyDigits(buyer.cpf || '');
+  if (cpf.length < 11) {
+    throw new HttpsError('invalid-argument', 'CPF invalido.');
+  }
+
+  const db = getFirestore();
+  const eventSnap = await db.doc(`saleEvents/${eventId}`).get();
+  if (!eventSnap.exists) {
+    throw new HttpsError('not-found', 'Evento nao encontrado.');
+  }
+  const priceCents = Number(eventSnap.data()!['priceCents']);
+  const { items, eventTitle } = await loadOrderItems(db, eventId, photoIds, priceCents);
+
+  const accessToken = newAccessToken();
+  const orderRef = db.collection('orders').doc();
+  const orderId = orderRef.id;
+  const base = siteUrl.value().replace(/\/$/, '');
+  const returnUrl = `${base}/fotos/pedido/${orderId}?token=${accessToken}`;
+  const handle = infinitePayHandle.value().replace(/^\$/, '').trim();
+
+  if (!handle) {
+    throw new HttpsError('failed-precondition', 'InfinitePay handle nao configurado.');
+  }
+
+  const { checkoutUrl, slug } = await createInfinitePayLink({
+    handle,
+    order_nsu: orderId,
+    redirect_url: returnUrl,
+    webhook_url: `${webhookBaseUrl()}/infinitepayWebhook`,
+    customer: {
+      name: buyer.name.trim(),
+      email: buyer.email.trim().toLowerCase(),
+      phone_number: formatPhoneBR(buyer.phone),
+    },
+    items: items.map((item) => ({
+      quantity: 1,
+      price: item.priceCents,
+      description: `${eventTitle} â€” ${item.filename}`.slice(0, 250),
+    })),
+  });
+
+  await orderRef.set({
+    eventId,
+    eventTitle,
+    items,
+    buyer: {
+      name: buyer.name.trim(),
+      email: buyer.email.trim().toLowerCase(),
+      phone: buyer.phone.trim(),
+      cpf,
+    },
+    paymentProvider: 'infinitepay',
+    paymentMethod: 'pix',
+    status: 'pending',
+    totalCents: items.length * priceCents,
+    accessToken,
+    checkoutUrl,
+    ipSlug: slug || '',
+    createdAt: new Date().toISOString(),
+  });
+
+  return { orderId, accessToken, checkoutUrl };
+});
+
+export const syncInfinitePayPayment = onCall({ cors: true }, async (request) => {
+  const orderId = String(request.data?.orderId || '').trim();
+  const accessToken = String(request.data?.accessToken || '').trim();
+  const slug = String(request.data?.slug || '').trim();
+  const transactionNsu = String(request.data?.transactionNsu || '').trim();
+
+  if (!orderId || !accessToken) {
+    throw new HttpsError('invalid-argument', 'Pedido e token obrigatorios.');
+  }
+
+  const db = getFirestore();
+  const orderSnap = await db.doc(`orders/${orderId}`).get();
+  if (!orderSnap.exists) {
+    throw new HttpsError('not-found', 'Pedido nao encontrado.');
+  }
+
+  const order = orderSnap.data()!;
+  const expected = String(order['accessToken'] || '');
+  if (!tokensMatch(expected, accessToken)) {
+    throw new HttpsError('permission-denied', 'Token invalido.');
+  }
+
+  if (order['status'] === 'paid') {
+    await fulfillOrderDownloads(db, orderId, order);
+    return { paid: true };
+  }
+
+  const resolvedSlug = slug || String(order['ipSlug'] || '').trim();
+  const resolvedTxn = transactionNsu || String(order['ipTransactionNsu'] || '').trim();
+  if (!resolvedSlug || !resolvedTxn) {
+    return { paid: false };
+  }
+
+  const handle = infinitePayHandle.value().replace(/^\$/, '').trim();
+  const check = await checkInfinitePayPayment({
+    handle,
+    order_nsu: orderId,
+    transaction_nsu: resolvedTxn,
+    slug: resolvedSlug,
+  });
+
+  if (!check.paid) {
+    return { paid: false };
+  }
+
+  await markOrderPaidAndFulfill(orderId, {
+    paymentProvider: 'infinitepay',
+    paymentMethod: paymentMethodFromCapture(check.capture_method),
+    ipSlug: resolvedSlug,
+    ipTransactionNsu: resolvedTxn,
+  });
+
+  return { paid: true };
+});
+
+export const infinitepayWebhook = onRequest({ cors: false }, async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).json({ success: false, message: 'Method not allowed' });
+    return;
+  }
+
+  try {
+    const body = (req.body || {}) as Record<string, unknown>;
+    const orderId = String(body['order_nsu'] || '').trim();
+    if (!orderId) {
+      res.status(400).json({ success: false, message: 'order_nsu ausente' });
+      return;
     }
 
     const db = getFirestore();
-    const eventSnap = await db.doc(`saleEvents/${eventId}`).get();
-    if (!eventSnap.exists) {
-      throw new HttpsError('not-found', 'Evento nao encontrado.');
-    }
-    const event = eventSnap.data()!;
-    if (!event['active']) {
-      throw new HttpsError('failed-precondition', 'Evento indisponivel.');
+    const orderSnap = await db.doc(`orders/${orderId}`).get();
+    if (!orderSnap.exists) {
+      res.status(400).json({ success: false, message: 'Pedido nao encontrado' });
+      return;
     }
 
-    const priceCents = Number(event['priceCents']);
-    if (!Number.isFinite(priceCents) || priceCents < 1) {
-      throw new HttpsError('failed-precondition', 'Preco do evento invalido.');
+    const order = orderSnap.data()!;
+    if (order['status'] === 'paid') {
+      res.status(200).json({ success: true, message: null });
+      return;
     }
 
-    const photoSnaps = await Promise.all(
-      photoIds.map((id) => db.doc(`salePhotos/${id}`).get())
-    );
-    const photos: Array<Record<string, unknown> & { id: string }> = photoSnaps.map(
-      (snap, i) => {
-        if (!snap.exists) {
-          throw new HttpsError('not-found', `Foto nao encontrada: ${photoIds[i]}`);
-        }
-        const photo = snap.data() as Record<string, unknown>;
-        if (photo['eventId'] !== eventId) {
-          throw new HttpsError('invalid-argument', 'Foto nao pertence ao evento.');
-        }
-        return { id: snap.id, ...photo };
+    const capture = body['capture_method'] ? String(body['capture_method']) : undefined;
+    const slug = body['invoice_slug'] ? String(body['invoice_slug']) : String(order['ipSlug'] || '');
+    const transactionNsu = body['transaction_nsu'] ? String(body['transaction_nsu']) : '';
+
+    if (transactionNsu && slug) {
+      const handle = infinitePayHandle.value().replace(/^\$/, '').trim();
+      const check = await checkInfinitePayPayment({
+        handle,
+        order_nsu: orderId,
+        transaction_nsu: transactionNsu,
+        slug,
+      });
+      if (!check.paid) {
+        res.status(200).json({ success: true, message: null });
+        return;
       }
-    );
-
-    const items = photos.map((photo) => ({
-      photoId: photo.id,
-      eventId,
-      filename: String(photo['filename'] || photo.id),
-      previewUrl: String(photo['thumbUrl'] || photo['previewUrl'] || ''),
-      priceCents,
-    }));
-    const totalCents = items.length * priceCents;
-    const accessToken = newAccessToken();
-    const orderRef = db.collection('orders').doc();
-    const orderId = orderRef.id;
-    const base = siteUrl.value().replace(/\/$/, '');
-    const returnUrl = `${base}/fotos/pedido/${orderId}?token=${accessToken}`;
-
-    const token = mpAccessToken.value();
-    if (!token) {
-      throw new HttpsError('failed-precondition', 'Mercado Pago nao configurado.');
     }
 
-    const preference = new Preference(mpClient(token));
-    const excluded =
-      paymentMethod === 'pix'
-        ? [
-            { id: 'credit_card' },
-            { id: 'debit_card' },
-            { id: 'ticket' },
-            { id: 'atm' },
-          ]
-        : [{ id: 'ticket' }, { id: 'atm' }, { id: 'bank_transfer' }];
-
-    const created = await preference.create({
-      body: {
-        external_reference: orderId,
-        notification_url: `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/mercadopagoWebhook`,
-        back_urls: {
-          success: returnUrl,
-          failure: returnUrl,
-          pending: returnUrl,
-        },
-        auto_return: 'approved',
-        payer: {
-          name: buyer.name.trim(),
-          email: buyer.email.trim(),
-          phone: { number: onlyDigits(buyer.phone) },
-          identification: { type: 'CPF', number: cpf },
-        },
-        items: items.map((item) => ({
-          id: item.photoId,
-          title: `${event['title']} — ${item.filename}`.slice(0, 250),
-          quantity: 1,
-          unit_price: Number((item.priceCents / 100).toFixed(2)),
-          currency_id: 'BRL',
-        })),
-        payment_methods: {
-          excluded_payment_types: excluded,
-          installments: paymentMethod === 'credit_card' ? 12 : 1,
-        },
-        metadata: {
-          orderId,
-          eventId,
-        },
-      },
+    await markOrderPaidAndFulfill(orderId, {
+      paymentProvider: 'infinitepay',
+      paymentMethod: paymentMethodFromCapture(capture),
+      ipSlug: slug,
+      ipTransactionNsu: transactionNsu,
     });
 
-    await orderRef.set({
-      eventId,
-      eventTitle: String(event['title'] || ''),
-      items,
-      buyer: {
-        name: buyer.name.trim(),
-        email: buyer.email.trim().toLowerCase(),
-        phone: buyer.phone.trim(),
-        cpf,
-      },
-      paymentMethod,
-      status: 'pending',
-      totalCents,
-      mpPreferenceId: created.id,
-      accessToken,
-      createdAt: new Date().toISOString(),
-    });
-
-    return {
-      orderId,
-      accessToken,
-      initPoint: created.init_point,
-      sandboxInitPoint: created.sandbox_init_point,
-    };
+    res.status(200).json({ success: true, message: null });
+  } catch (err) {
+    console.error('[infinitepayWebhook]', err);
+    res.status(400).json({ success: false, message: 'Erro ao processar webhook' });
   }
-);
-
-export const mercadopagoWebhook = onRequest(
-  { secrets: [mpAccessToken], cors: false },
-  async (req, res) => {
-    try {
-      if (req.method !== 'POST' && req.method !== 'GET') {
-        res.status(405).send('Method not allowed');
-        return;
-      }
-
-      const type = String(req.query['type'] || req.body?.type || '');
-      const topic = String(req.query['topic'] || req.body?.topic || '');
-      const dataId = String(
-        req.query['data.id'] ||
-          req.query['id'] ||
-          req.body?.data?.id ||
-          req.body?.id ||
-          ''
-      );
-
-      const isPayment = type === 'payment' || topic === 'payment';
-      if (!isPayment || !dataId) {
-        res.status(200).send('ignored');
-        return;
-      }
-
-      const token = mpAccessToken.value();
-      const paymentApi = new Payment(mpClient(token));
-      const payment = await paymentApi.get({ id: dataId });
-      const status = String(payment.status || '');
-      const orderId = String(payment.external_reference || '');
-      if (!orderId) {
-        res.status(200).send('no-order');
-        return;
-      }
-
-      const db = getFirestore();
-      const orderRef = db.doc(`orders/${orderId}`);
-      const orderSnap = await orderRef.get();
-      if (!orderSnap.exists) {
-        res.status(200).send('order-missing');
-        return;
-      }
-
-      const order = orderSnap.data()!;
-      const buyer = (order['buyer'] || {}) as { email?: string; name?: string };
-      if (status === 'approved' && order['status'] !== 'paid') {
-        await orderRef.update({
-          status: 'paid',
-          mpPaymentId: String(payment.id || dataId),
-          paidAt: new Date().toISOString(),
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        await enqueuePaidEmail({
-          to: String(buyer.email || ''),
-          name: String(buyer.name || ''),
-          eventTitle: String(order['eventTitle'] || ''),
-          orderId,
-          accessToken: String(order['accessToken'] || ''),
-          totalCents: Number(order['totalCents'] || 0),
-        });
-      } else if (status === 'cancelled' || status === 'rejected') {
-        if (order['status'] === 'pending') {
-          await orderRef.update({
-            status: status === 'cancelled' ? 'cancelled' : 'failed',
-            mpPaymentId: String(payment.id || dataId),
-            updatedAt: FieldValue.serverTimestamp(),
-          });
-        }
-      }
-
-      res.status(200).send('ok');
-    } catch (err) {
-      console.error('[mercadopagoWebhook]', err);
-      res.status(500).send('error');
-    }
-  }
-);
+});
 
 export const getOrderDownloads = onCall({ cors: true }, async (request) => {
   const orderId = String(request.data?.orderId || '').trim();
@@ -285,28 +464,7 @@ export const getOrderDownloads = onCall({ cors: true }, async (request) => {
     throw new HttpsError('permission-denied', 'Token invalido.');
   }
 
-  const items = Array.isArray(order['items']) ? order['items'] : [];
-  const bucket = getStorage().bucket();
-  const files: { filename: string; url: string }[] = [];
-
-  for (const item of items) {
-    const photoId = String(item?.photoId || '');
-    if (!photoId) continue;
-    const photoSnap = await db.doc(`salePhotos/${photoId}`).get();
-    if (!photoSnap.exists) continue;
-    const photo = photoSnap.data()!;
-    const storagePath = String(photo['storagePath'] || '');
-    const filename = String(photo['filename'] || item.filename || photoId);
-    if (!storagePath) continue;
-
-    const [url] = await bucket.file(storagePath).getSignedUrl({
-      action: 'read',
-      expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      responseDisposition: `attachment; filename="${filename.replace(/"/g, '')}"`,
-    });
-    files.push({ filename, url });
-  }
-
+  const files = await fulfillOrderDownloads(db, orderId, order);
   return { files };
 });
 
@@ -325,7 +483,7 @@ async function enqueuePaidEmail(input: {
   const orderUrl = `${base}/fotos/pedido/${input.orderId}?token=${input.accessToken}`;
   const name = input.name.trim() || 'cliente';
   const total = formatPriceBRL(input.totalCents);
-  const subject = `NOX Fotografia — Pagamento confirmado (${input.eventTitle})`;
+  const subject = `NOX Fotografia â€” Pagamento confirmado (${input.eventTitle})`;
   const text = [
     `Ola, ${name}!`,
     '',
@@ -361,7 +519,7 @@ async function enqueuePaidEmail(input: {
           </a>
         </td></tr>
         <tr><td style="color:#9a9284;font-size:12px;line-height:1.4;">
-          E-mail automatico — nao responda.<br/>
+          E-mail automatico â€” nao responda.<br/>
           <a href="${base}" style="color:#d4af37;">nox-fotografia.com.br</a>
         </td></tr>
       </table>

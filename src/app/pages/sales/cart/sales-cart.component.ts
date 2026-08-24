@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { SaleService } from '../../../core/services/sale.service';
 import { formatPriceBRL } from '../../../core/models/sale-event.model';
@@ -18,7 +18,6 @@ import { FirebaseError } from 'firebase/app';
 export class SalesCartComponent {
   private readonly fb = inject(FormBuilder);
   private readonly sales = inject(SaleService);
-  private readonly router = inject(Router);
   readonly cart = inject(CartService);
 
   readonly formatPrice = formatPriceBRL;
@@ -59,10 +58,9 @@ export class SalesCartComponent {
     this.error.set('');
     try {
       const v = this.form.getRawValue();
-      const result = await this.sales.createPixOrder({
+      const result = await this.sales.createInfinitePayCheckout({
         eventId,
         photoIds,
-        items,
         buyer: {
           name: v.name.trim(),
           email: v.email.trim(),
@@ -72,20 +70,27 @@ export class SalesCartComponent {
       });
 
       this.cart.clear();
-      await this.router.navigate(['/fotos/pedido', result.orderId], {
-        queryParams: { token: result.accessToken },
-      });
+      window.location.assign(result.checkoutUrl);
     } catch (err) {
       console.error('[checkout]', err);
-      if (err instanceof FirebaseError && err.code === 'permission-denied') {
-        this.error.set(
-          'Sem permiss\u00e3o para criar pedido. Publique as rules da cole\u00e7\u00e3o orders no Firebase.'
-        );
-      } else {
-        this.error.set('N\u00e3o foi poss\u00edvel gerar o Pix. Tente novamente.');
-      }
+      this.error.set(this.checkoutErrorMessage(err));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private checkoutErrorMessage(err: unknown): string {
+    if (err instanceof FirebaseError) {
+      if (err.code === 'functions/not-found' || err.code === 'functions/unavailable') {
+        return 'Pagamento indispon\u00edvel. Publique as Cloud Functions no Firebase (createInfinitePayCheckout).';
+      }
+      if (err.message && err.code.startsWith('functions/')) {
+        return err.message;
+      }
+    }
+    if (err instanceof Error && err.message.trim()) {
+      return err.message;
+    }
+    return 'N\u00e3o foi poss\u00edvel iniciar o pagamento. Tente novamente.';
   }
 }

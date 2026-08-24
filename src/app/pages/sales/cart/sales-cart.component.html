@@ -64,12 +64,12 @@
         </div>
 
         <h2>Pagamento</h2>
-        <p class="pay-info">Pagamento via <strong>Pix</strong>. Ao confirmar, voc&ecirc; ver&aacute; o QR Code da conta.</p>
+        <p class="pay-info">Pagamento seguro via <strong>InfinitePay</strong> (Pix ou cart&atilde;o em at&eacute; 12x).</p>
 
         @if (error()) { <p class="err">{{ error() }}</p> }
 
         <button class="btn btn-primary" type="submit" [disabled]="loading()">
-          {{ loading() ? 'Gerando Pix...' : 'Gerar Pix' }}
+          {{ loading() ? 'Redirecionando...' : 'Pagar agora' }}
         </button>
       </form>
     </div>
