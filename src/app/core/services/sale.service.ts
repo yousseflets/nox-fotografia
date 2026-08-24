@@ -372,6 +372,10 @@ export class SaleService {
     await updateDoc(doc(this.firestore, `orders/${orderId}`), payload);
   }
 
+  async deleteOrder(orderId: string): Promise<void> {
+    await deleteDoc(doc(this.firestore, `orders/${orderId}`));
+  }
+
   /** Gera URLs de download (admin autenticado) e grava no pedido. */
   async prepareOrderDownloads(orderId: string): Promise<SaleOrderDownloadFile[]> {
     const orderSnap = await getDoc(doc(this.firestore, `orders/${orderId}`));

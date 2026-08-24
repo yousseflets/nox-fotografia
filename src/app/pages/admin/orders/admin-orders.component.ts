@@ -4,6 +4,7 @@ import { catchError, of, switchMap, tap } from 'rxjs';
 import { FirebaseError } from 'firebase/app';
 import { SaleService } from '../../../core/services/sale.service';
 import { MailService } from '../../../core/services/mail.service';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   SaleOrder,
   SaleOrderStatus,
@@ -24,6 +25,10 @@ type StatusFilter = 'all' | SaleOrderStatus;
 export class AdminOrdersComponent {
   private readonly sales = inject(SaleService);
   private readonly mail = inject(MailService);
+  private readonly auth = inject(AuthService);
+  private readonly ordersDeleteEmail = environment.ordersDeleteEmail.toLowerCase();
+
+  private readonly currentUser = toSignal(this.auth.firebaseUser$, { initialValue: null });
 
   private readonly listTick = signal(0);
   readonly listError = signal('');
@@ -70,6 +75,11 @@ export class AdminOrdersComponent {
   readonly pendingCount = computed(
     () => this.list().filter((item) => item.status === 'pending').length
   );
+
+  readonly canDeleteOrders = computed(() => {
+    const email = this.currentUser()?.email?.toLowerCase() ?? '';
+    return email === this.ordersDeleteEmail;
+  });
 
   setFilter(filter: StatusFilter) {
     this.statusFilter.set(filter);
@@ -159,6 +169,30 @@ export class AdminOrdersComponent {
     } catch (err) {
       console.error('[admin.orders.cancel]', err);
       this.error.set(this.errorMessage(err, 'cancelar pedido'));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async deleteOrder(order: SaleOrder) {
+    if (!order.id || !this.canDeleteOrders()) return;
+    if (
+      !confirm(
+        `Excluir permanentemente o pedido #${order.id} de ${order.buyer.name}? Esta a\u00e7\u00e3o n\u00e3o pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.message.set('');
+    this.error.set('');
+    try {
+      await this.sales.deleteOrder(order.id);
+      this.message.set('Pedido exclu\u00eddo.');
+    } catch (err) {
+      console.error('[admin.orders.delete]', err);
+      this.error.set(this.errorMessage(err, 'excluir pedido'));
     } finally {
       this.loading.set(false);
     }

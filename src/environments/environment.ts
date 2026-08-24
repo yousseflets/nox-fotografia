@@ -2,6 +2,7 @@ export const environment = {
   production: true,
   siteUrl: 'https://www.nox-fotografia.com.br',
   infinitePayHandle: 'thaisroza',
+  ordersDeleteEmail: 'leticiayoussef.si@gmail.com',
   pix: {
     key: 'thataroza@gmail.com',
     merchantName: 'NOX Fotografia',

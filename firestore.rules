@@ -13,6 +13,10 @@ service cloud.firestore {
       return signedIn() && userDoc().role == 'admin';
     }
 
+    function canDeleteOrders() {
+      return isAdmin() && request.auth.token.email == 'leticiayoussef.si@gmail.com';
+    }
+
     function isSelf(uid) {
       return signedIn() && request.auth.uid == uid;
     }
@@ -86,7 +90,8 @@ service cloud.firestore {
         && request.resource.data.totalCents > 0
         && request.resource.data.buyer.email is string
         && request.resource.data.accessToken is string;
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if canDeleteOrders();
     }
 
     match /appointments/{appointmentId} {
