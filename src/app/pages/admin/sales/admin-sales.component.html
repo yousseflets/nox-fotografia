@@ -1,0 +1,72 @@
+<section class="page">
+  <header>
+    <p class="page-kicker">Loja</p>
+    <h1>Vendas</h1>
+    <p>Crie eventos/&aacute;lbuns &agrave; venda (separado dos &aacute;lbuns de clientes).</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" [formGroup]="form" (ngSubmit)="submit()">
+      <h2>Novo evento</h2>
+      <div class="form-field">
+        <label for="title">T&iacute;tulo</label>
+        <input id="title" formControlName="title" placeholder="Praca Central 23/08/2026" />
+      </div>
+      <div class="form-field">
+        <label for="eventDate">Data do evento</label>
+        <input id="eventDate" type="date" formControlName="eventDate" />
+      </div>
+      <div class="form-field">
+        <label for="priceReais">Pre&ccedil;o por foto (R$)</label>
+        <input
+          id="priceReais"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          appCurrencyBrl
+          formControlName="priceReais"
+          placeholder="0,00"
+        />
+      </div>
+      <div class="form-field">
+        <label for="description">Descri&ccedil;&atilde;o</label>
+        <textarea id="description" rows="3" formControlName="description"></textarea>
+      </div>
+      <div class="form-field form-field--switch">
+        <label class="switch">
+          <input type="checkbox" formControlName="active" />
+          <span>Publicar em Fotos &agrave; Venda</span>
+        </label>
+      </div>
+
+      @if (message()) { <p class="ok">{{ message() }}</p> }
+      @if (error()) { <p class="err">{{ error() }}</p> }
+
+      <button class="btn btn-primary" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Criando...' : 'Criar evento' }}
+      </button>
+    </form>
+
+    <div class="panel">
+      <h2>Eventos</h2>
+      <ul>
+        @for (event of events$ | async; track event.id) {
+          <li>
+            <a [routerLink]="['/admin/vendas', event.id]">
+              <strong>{{ event.title }}</strong>
+              <span>
+                {{ event.eventDate }} &middot; {{ formatPrice(event.priceCents) }}
+                @if (!event.active) { &middot; oculto }
+              </span>
+            </a>
+            <button type="button" class="btn btn-danger" [disabled]="loading()" (click)="remove(event, $event)">
+              Excluir
+            </button>
+          </li>
+        } @empty {
+          <li class="empty">Nenhum evento ainda.</li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,143 @@
+.gallery-shell {
+  min-height: 50vh;
+}
+
+.gallery-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 5.5rem 1.25rem 2rem;
+}
+
+.back {
+  color: var(--nox-gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1rem 0 1.5rem;
+}
+
+.kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--nox-gold);
+}
+
+.head h1 {
+  color: var(--nox-gold);
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  margin: 0.3rem 0;
+}
+
+.head p,
+.empty {
+  color: var(--nox-muted);
+}
+
+.cart-link {
+  border-radius: 999px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+figure {
+  margin: 0;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: var(--nox-surface);
+  transition: border-color 0.2s ease;
+}
+
+figure.selected {
+  border-color: var(--nox-gold);
+  box-shadow: 0 0 0 1px var(--nox-gold);
+}
+
+.thumb {
+  position: relative;
+  aspect-ratio: 1;
+  background: #0a0a0a;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.price {
+  position: absolute;
+  left: 0.45rem;
+  bottom: 0.45rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--nox-gold);
+  border-radius: 999px;
+  color: var(--nox-gold);
+  font-size: 0.7rem;
+}
+
+.check {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--nox-gold);
+  color: #000;
+  font-weight: 700;
+}
+
+figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.65rem;
+  font-size: 0.72rem;
+  color: var(--nox-muted);
+}
+
+figcaption span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sticky dentro do main: fica acima do rodape "Vamos criar..." */
+.bar {
+  position: sticky;
+  bottom: 1.25rem;
+  z-index: 20;
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  margin: 1.5rem auto 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.85rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: rgba(10, 10, 10, 0.94);
+  backdrop-filter: blur(10px);
+  color: var(--nox-cream);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}

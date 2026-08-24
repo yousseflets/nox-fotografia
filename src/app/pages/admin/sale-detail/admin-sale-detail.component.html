@@ -1,0 +1,83 @@
+<section class="page">
+  <a class="back" routerLink="/admin/vendas">&larr; Vendas</a>
+
+  @if (event$ | async; as event) {
+    <header class="page-head">
+      <div>
+        <p class="page-kicker">Evento &agrave; venda</p>
+        <h1>{{ event.title }}</h1>
+        <p>{{ event.eventDate }} &middot; {{ formatPrice(event.priceCents) }} / foto</p>
+      </div>
+      <button type="button" class="btn btn-danger" (click)="deleteEvent()">Excluir evento</button>
+    </header>
+
+    <form class="panel meta" [formGroup]="metaForm" (ngSubmit)="saveMeta()">
+      <h2>Dados e pre&ccedil;o</h2>
+      <div class="meta__grid">
+        <div class="form-field">
+          <label for="title">T&iacute;tulo</label>
+          <input id="title" formControlName="title" />
+        </div>
+        <div class="form-field">
+          <label for="eventDate">Data</label>
+          <input id="eventDate" type="date" formControlName="eventDate" />
+        </div>
+        <div class="form-field">
+          <label for="priceReais">Pre&ccedil;o por foto (R$)</label>
+          <input
+            id="priceReais"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            appCurrencyBrl
+            formControlName="priceReais"
+            placeholder="0,00"
+          />
+        </div>
+      </div>
+      <div class="form-field">
+        <label for="description">Descri&ccedil;&atilde;o</label>
+        <textarea id="description" rows="2" formControlName="description"></textarea>
+      </div>
+      <div class="meta__actions">
+        <label class="switch">
+          <input type="checkbox" formControlName="active" />
+          <span>Publicado em Fotos &agrave; Venda</span>
+        </label>
+        <button class="btn btn-outline" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="panel upload">
+      <h2>Upload de fotos</h2>
+      <p>As fotos publicas ganham marca d'&aacute;gua NOX. O original fica privado at&eacute; o pagamento.</p>
+      <label class="btn btn-primary file-btn">
+        {{ uploading() ? 'Enviando...' : 'Selecionar fotos' }}
+        <input type="file" accept="image/*" multiple hidden [disabled]="uploading()" (change)="onFilesSelected($event)" />
+      </label>
+      @if (uploading()) {
+        <div class="progress"><span [style.width.%]="progress()"></span></div>
+      }
+      @if (message()) { <p class="ok">{{ message() }}</p> }
+      @if (error()) { <p class="err">{{ error() }}</p> }
+    </div>
+
+    <div class="gallery">
+      @for (photo of photos$ | async; track photo.id) {
+        <figure>
+          <img [src]="preview(photo)" [alt]="photo.filename" loading="lazy" />
+          <figcaption>
+            <span>{{ photo.filename }}</span>
+            <button type="button" class="btn btn-ghost" (click)="remove(photo)">Remover</button>
+          </figcaption>
+        </figure>
+      } @empty {
+        <p class="empty">Nenhuma foto ainda.</p>
+      }
+    </div>
+  } @else {
+    <p class="empty">Evento n&atilde;o encontrado.</p>
+  }
+</section>

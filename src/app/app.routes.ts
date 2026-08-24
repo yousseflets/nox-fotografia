@@ -25,6 +25,32 @@ export const routes: Routes = [
       import('./pages/auth/register/register.component').then((m) => m.RegisterComponent),
   },
   {
+    path: 'fotos',
+    loadComponent: () =>
+      import('./pages/sales/events-list/sales-events-list.component').then(
+        (m) => m.SalesEventsListComponent
+      ),
+  },
+  {
+    path: 'fotos/pedido/:orderId',
+    loadComponent: () =>
+      import('./pages/sales/order-status/sales-order-status.component').then(
+        (m) => m.SalesOrderStatusComponent
+      ),
+  },
+  {
+    path: 'fotos/:slug',
+    loadComponent: () =>
+      import('./pages/sales/event-gallery/sales-event-gallery.component').then(
+        (m) => m.SalesEventGalleryComponent
+      ),
+  },
+  {
+    path: 'carrinho',
+    loadComponent: () =>
+      import('./pages/sales/cart/sales-cart.component').then((m) => m.SalesCartComponent),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
@@ -54,6 +80,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/admin/album-detail/admin-album-detail.component').then(
             (m) => m.AdminAlbumDetailComponent
+          ),
+      },
+      {
+        path: 'vendas',
+        loadComponent: () =>
+          import('./pages/admin/sales/admin-sales.component').then((m) => m.AdminSalesComponent),
+      },
+      {
+        path: 'vendas/:id',
+        loadComponent: () =>
+          import('./pages/admin/sale-detail/admin-sale-detail.component').then(
+            (m) => m.AdminSaleDetailComponent
           ),
       },
       {

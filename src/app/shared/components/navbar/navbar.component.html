@@ -16,7 +16,11 @@
 
     <nav class="nav__links" [class.nav__links--open]="menuOpen">
       @for (link of links; track link.href) {
-        <a [href]="link.href" (click)="closeMenu()">{{ link.label }}</a>
+        @if (link.routerLink) {
+          <a [routerLink]="link.href" (click)="closeMenu()">{{ link.label }}</a>
+        } @else {
+          <a [href]="link.href" (click)="closeMenu()">{{ link.label }}</a>
+        }
       }
       @if (auth.user$ | async; as user) {
         <a
@@ -24,7 +28,7 @@
           [routerLink]="user.role === 'admin' ? '/admin' : '/cliente'"
           (click)="closeMenu()"
         >
-          Minha área
+        Minha &aacute;rea
         </a>
       } @else {
         <a routerLink="/login" (click)="closeMenu()">Entrar</a>

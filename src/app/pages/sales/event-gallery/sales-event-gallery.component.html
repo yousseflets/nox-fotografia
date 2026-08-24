@@ -1,0 +1,53 @@
+<app-navbar />
+<main class="gallery-shell">
+  <section class="gallery-page">
+    <a class="back" routerLink="/fotos">&larr; Fotos &agrave; Venda</a>
+
+    @if (event$ | async; as event) {
+      <header class="head">
+        <div>
+          <p class="kicker">Evento</p>
+          <h1>{{ event.title }}</h1>
+          <p>{{ event.eventDate | date: 'dd/MM/yyyy' }}</p>
+        </div>
+        <a class="btn btn-outline cart-link" routerLink="/carrinho">
+          Carrinho ({{ cart.count() }})
+        </a>
+      </header>
+
+      <div class="grid">
+        @for (photo of photos$ | async; track photo.id) {
+          <figure [class.selected]="isSelected(photo)" (click)="toggle(photo)">
+            <div class="thumb">
+              <img [src]="preview(photo)" [alt]="photo.filename" loading="lazy" />
+              <span class="price">{{ formatPrice(event.priceCents) }}</span>
+              @if (isSelected(photo)) {
+                <span class="check" aria-hidden="true">&#10003;</span>
+              }
+            </div>
+            <figcaption>
+              <span>{{ photo.filename }}</span>
+              <button type="button" class="btn btn-ghost" (click)="buyOne(photo); $event.stopPropagation()">
+                Comprar
+              </button>
+            </figcaption>
+          </figure>
+        } @empty {
+          <p class="empty">Fotos em breve.</p>
+        }
+      </div>
+
+      @if (selectedCount() > 0) {
+        <div class="bar" [class.bar--visible]="true">
+          <span>{{ selectedCount() }} foto(s) &middot; {{ formatPrice(selectedTotal()) }}</span>
+          <button type="button" class="btn btn-primary" (click)="addSelectedToCart()">
+            Ir ao carrinho
+          </button>
+        </div>
+      }
+    } @else {
+      <p class="empty">Evento n&atilde;o encontrado.</p>
+    }
+  </section>
+</main>
+<app-footer />

@@ -2,9 +2,14 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: 260px 1fr;
+  align-items: start;
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
   background: linear-gradient(180deg, #0c0c0c, #070707);
   border-right: 1px solid rgba(212, 175, 55, 0.18);
   padding: 1.5rem 1rem;
@@ -144,6 +149,9 @@
   }
 
   .sidebar {
+    position: static;
+    height: auto;
+    overflow: visible;
     border-right: 0;
     border-bottom: 1px solid var(--nox-border);
   }

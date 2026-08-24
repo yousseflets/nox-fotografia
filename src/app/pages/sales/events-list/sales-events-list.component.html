@@ -1,0 +1,32 @@
+<app-navbar />
+<main>
+  <section class="sales">
+    <div class="sales__hero">
+      <p class="sales__kicker">NOX Fotografia</p>
+      <h1>Fotos &agrave; Venda</h1>
+      <p class="sales__lead">Escolha o evento, selecione suas fotos e pague com Pix ou cart&atilde;o.</p>
+    </div>
+
+    <h2 class="sales__section">Eventos dispon&iacute;veis</h2>
+
+    <div class="grid">
+      @for (event of events$ | async; track event.id) {
+        <a class="card" [routerLink]="['/fotos', event.slug]">
+          <div class="card__cover">
+            @if (event.coverUrl) {
+              <img [src]="event.coverUrl" [alt]="event.title" loading="lazy" />
+            }
+            <span class="card__wm" aria-hidden="true">NOX Fotografia</span>
+          </div>
+          <div class="card__body">
+            <h3>{{ event.title }}</h3>
+            <p>{{ event.eventDate | date: 'dd/MM/yyyy' }}</p>
+          </div>
+        </a>
+      } @empty {
+        <p class="empty">Nenhum evento dispon&iacute;vel no momento.</p>
+      }
+    </div>
+  </section>
+</main>
+<app-footer />

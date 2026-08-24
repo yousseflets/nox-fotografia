@@ -15,12 +15,13 @@ export class NavbarComponent {
   menuOpen = false;
   scrolled = false;
 
-  readonly links = [
-    { label: 'Início', href: '#inicio' },
+  readonly links: { label: string; href: string; routerLink?: boolean }[] = [
+    { label: 'In\u00edcio', href: '#inicio' },
     { label: 'Sobre', href: '#sobre' },
-    { label: 'Portfólio', href: '#portfolio' },
+    { label: 'Portf\u00f3lio', href: '#portfolio' },
     { label: 'Depoimentos', href: '#depoimentos' },
     { label: 'Contato', href: '#contato' },
+    { label: 'Fotos \u00e0 Venda', href: '/fotos', routerLink: true },
   ];
 
   @HostListener('window:scroll')

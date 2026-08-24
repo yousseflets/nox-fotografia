@@ -28,5 +28,21 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Previews/thumbs publicos; originais so admin (download pos-pagamento via Function)
+    match /sales/{eventId}/previews/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /sales/{eventId}/thumbs/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /sales/{eventId}/originals/{fileName} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
   }
 }

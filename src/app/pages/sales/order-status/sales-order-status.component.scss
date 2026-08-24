@@ -1,0 +1,12 @@
+
+.order-page { max-width: 40rem; margin: 0 auto; padding: 5.5rem 1.25rem 4rem; }
+.back { color: var(--nox-gold); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.kicker { margin-top: 1rem; font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--nox-gold); }
+h1 { color: var(--nox-gold); font-size: clamp(1.8rem, 3vw, 2.4rem); margin: 0.35rem 0; }
+header p, .empty, .panel p { color: var(--nox-muted); }
+.panel { margin-top: 1.5rem; }
+.panel .btn { margin: 1rem 0; border-radius: 999px; }
+ul { list-style: none; padding: 0; margin: 1rem 0 0; }
+li { padding: 0.65rem 0; border-bottom: 1px solid rgba(212,175,55,0.15); }
+li a { color: var(--nox-gold); }
+.err { color: #e8a0a0; margin-top: 0.75rem; }

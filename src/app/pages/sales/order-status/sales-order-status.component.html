@@ -1,0 +1,42 @@
+<app-navbar />
+<main>
+<section class="order-page">
+  <a class="back" routerLink="/fotos">&larr; Fotos &agrave; Venda</a>
+
+  @if (order$ | async; as order) {
+    <header>
+      <p class="kicker">Pedido</p>
+      <h1>
+        @if (order.status === 'paid') { Pagamento aprovado }
+        @else if (order.status === 'pending') { Aguardando pagamento }
+        @else { Pedido {{ order.status }} }
+      </h1>
+      <p>{{ order.eventTitle }} &middot; {{ formatPrice(order.totalCents) }}</p>
+    </header>
+
+    @if (order.status === 'paid') {
+      <div class="panel">
+        <p>Suas fotos sem marca d'&aacute;gua est&atilde;o prontas.</p>
+        <button class="btn btn-primary" type="button" [disabled]="loadingDownloads()" (click)="loadDownloads()">
+          {{ loadingDownloads() ? 'Gerando links...' : 'Liberar downloads' }}
+        </button>
+        @if (error()) { <p class="err">{{ error() }}</p> }
+        <ul>
+          @for (file of downloads(); track file.url) {
+            <li>
+              <a [href]="file.url" target="_blank" rel="noopener">{{ file.filename }}</a>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else if (order.status === 'pending') {
+      <div class="panel">
+        <p>Se voc&ecirc; j&aacute; pagou, aguarde alguns segundos e atualize a p&aacute;gina.</p>
+      </div>
+    }
+  } @else {
+    <p class="empty">Pedido n&atilde;o encontrado.</p>
+  }
+</section>
+</main>
+<app-footer />

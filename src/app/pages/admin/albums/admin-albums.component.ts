@@ -60,7 +60,7 @@ export class AdminAlbumsComponent {
       let mailNote = '';
       if (value.notifyClient) {
         if (!client?.email) {
-          mailNote = ' Ýlbum criado, mas o cliente não tem e-mail cadastrado.';
+          mailNote = ' Ã�lbum criado, mas o cliente nÃ£o tem e-mail cadastrado.';
         } else {
           try {
             await this.mail.notifyAlbumAvailable({
@@ -74,16 +74,16 @@ export class AdminAlbumsComponent {
             const detail =
               err instanceof Error && err.message
                 ? err.message
-                : 'Confira a extensão Trigger Email e as rules da coleção mail.';
-            mailNote = ` Ýlbum criado, mas o e-mail não pôde ser enfileirado. ${detail}`;
+                : 'Confira a extensÃ£o Trigger Email e as rules da coleÃ§Ã£o mail.';
+            mailNote = ` Ã�lbum criado, mas o e-mail nÃ£o pÃ´de ser enfileirado. ${detail}`;
           }
         }
       }
 
-      this.message.set('Ýlbum criado. Abra-o para enviar as fotos.' + mailNote);
+      this.message.set('Ã�lbum criado. Abra-o para enviar as fotos.' + mailNote);
       this.form.reset({ title: '', clientId: '', description: '', notifyClient: true });
     } catch {
-      this.error.set('Não foi possível criar o álbum.');
+      this.error.set('NÃ£o foi possÃ­vel criar o Ã¡lbum.');
     } finally {
       this.loading.set(false);
     }
@@ -95,7 +95,7 @@ export class AdminAlbumsComponent {
     if (!album.id) return;
 
     const ok = confirm(
-      `Excluir o álbum "${album.title}"?\nTodas as fotos deste álbum também serão removidas.`
+      `Excluir o Ã¡lbum "${album.title}"?\nTodas as fotos deste Ã¡lbum tambÃ©m serÃ£o removidas.`
     );
     if (!ok) return;
 
@@ -105,9 +105,9 @@ export class AdminAlbumsComponent {
 
     try {
       await this.albums.deleteAlbum(album.id);
-      this.message.set('Ýlbum excluído.');
+      this.message.set('Ã�lbum excluÃ­do.');
     } catch {
-      this.error.set('Não foi possível excluir o álbum.');
+      this.error.set('NÃ£o foi possÃ­vel excluir o Ã¡lbum.');
     } finally {
       this.loading.set(false);
     }

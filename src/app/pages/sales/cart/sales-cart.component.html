@@ -1,0 +1,88 @@
+<app-navbar />
+<main>
+<section class="cart-page">
+  <a class="back" routerLink="/fotos">&larr; Continuar comprando</a>
+  <header>
+    <p class="kicker">Checkout</p>
+    <h1>Carrinho</h1>
+  </header>
+
+  @if (cart.items().length === 0) {
+    <p class="empty">Seu carrinho est&aacute; vazio.</p>
+    <a class="btn btn-primary" routerLink="/fotos">Ver eventos</a>
+  } @else {
+    <div class="layout">
+      <div class="panel table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Foto</th>
+              <th>Valor</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of cart.items(); track item.photoId) {
+              <tr>
+                <td class="photo-cell">
+                  <img [src]="item.previewUrl" [alt]="item.filename" />
+                  <span>{{ item.filename }}</span>
+                </td>
+                <td>{{ formatPrice(item.priceCents) }}</td>
+                <td>
+                  <button type="button" class="btn btn-ghost" (click)="remove(item.photoId)">Remover</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              <td colspan="2"><strong>{{ formatPrice(cart.totalCents()) }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <form class="panel checkout" [formGroup]="form" (ngSubmit)="checkout()">
+        <h2>Seus dados</h2>
+        <div class="form-field">
+          <label for="name">Nome completo</label>
+          <input id="name" formControlName="name" autocomplete="name" />
+        </div>
+        <div class="form-field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" formControlName="email" autocomplete="email" />
+        </div>
+        <div class="form-field">
+          <label for="phone">Telefone / WhatsApp</label>
+          <input id="phone" formControlName="phone" autocomplete="tel" />
+        </div>
+        <div class="form-field">
+          <label for="cpf">CPF</label>
+          <input id="cpf" formControlName="cpf" inputmode="numeric" />
+        </div>
+
+        <h2>Pagamento</h2>
+        <div class="pay-options">
+          <label class="pay">
+            <input type="radio" formControlName="paymentMethod" value="pix" />
+            <span>Pix</span>
+          </label>
+          <label class="pay">
+            <input type="radio" formControlName="paymentMethod" value="credit_card" />
+            <span>Cart&atilde;o de cr&eacute;dito</span>
+          </label>
+        </div>
+
+        @if (error()) { <p class="err">{{ error() }}</p> }
+
+        <button class="btn btn-primary" type="submit" [disabled]="loading()">
+          {{ loading() ? 'Redirecionando...' : 'Pagar agora' }}
+        </button>
+      </form>
+    </div>
+  }
+</section>
+</main>
+<app-footer />
