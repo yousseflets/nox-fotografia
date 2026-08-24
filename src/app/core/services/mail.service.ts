@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Firestore, addDoc, collection } from '@angular/fire/firestore';
 import { FirebaseError } from 'firebase/app';
 import { MAIL_ICON_PNG_BASE64 } from './mail-icons';
+import { formatPriceBRL } from '../models/sale-event.model';
+import { environment } from '../../../environments/environment';
 
 export type AlbumAvailableMailInput = {
   to: string;
@@ -9,7 +11,16 @@ export type AlbumAvailableMailInput = {
   albumTitle: string;
 };
 
-const SITE_BASE = 'https://www.nox-fotografia.com.br';
+export type OrderPaidMailInput = {
+  to: string;
+  name: string;
+  eventTitle: string;
+  orderId: string;
+  accessToken: string;
+  totalCents: number;
+};
+
+const SITE_BASE = environment.siteUrl.replace(/\/$/, '');
 const LOGO_URL = `${SITE_BASE}/nox-logo.png`;
 const WHATSAPP = '(11) 98927-3898';
 const WHATSAPP_URL = 'https://wa.me/5511989273898';
@@ -87,6 +98,74 @@ export class MailService {
           );
         }
         throw new Error(`Falha ao enfileirar e-mail (${err.code}).`);
+      }
+      throw err;
+    }
+  }
+
+  /** E-mail de pagamento confirmado (fotos à venda). */
+  async notifyOrderPaid(input: OrderPaidMailInput): Promise<void> {
+    const to = input.to.trim();
+    if (!to) return;
+
+    const name = input.name.trim() || 'cliente';
+    const total = formatPriceBRL(input.totalCents);
+    const orderUrl = `${SITE_BASE}/fotos/pedido/${input.orderId}?token=${input.accessToken}`;
+    const subject = `NOX Fotografia \u2014 Pagamento confirmado (${input.eventTitle})`;
+    const text = [
+      `Ol\u00e1, ${name}!`,
+      '',
+      'Seu pagamento foi confirmado.',
+      `Evento: ${input.eventTitle}`,
+      `Total: ${total}`,
+      '',
+      `Baixe suas fotos (sem marca d'agua): ${orderUrl}`,
+      '',
+      'NOX Fotografia',
+      'Momentos passam. Mem\u00f3rias permanecem.',
+    ].join('\n');
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<body style="margin:0;background:#0a0a0a;color:#f5f0e6;font-family:Georgia,serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#141414;border:1px solid #d4af37;border-radius:12px;padding:28px;">
+        <tr><td align="center" style="padding-bottom:16px;">
+          <img src="${LOGO_URL}" alt="NOX Fotografia" width="120" style="display:block;" />
+        </td></tr>
+        <tr><td style="color:#d4af37;font-size:22px;padding-bottom:12px;">Pagamento confirmado</td></tr>
+        <tr><td style="color:#f5f0e6;font-size:16px;line-height:1.5;padding-bottom:12px;">
+          Ol\u00e1, ${escapeHtml(name)}! Suas fotos de <strong>${escapeHtml(input.eventTitle)}</strong>
+          (${escapeHtml(total)}) est\u00e3o prontas para download sem marca d'agua.
+        </td></tr>
+        <tr><td align="center" style="padding:18px 0;">
+          <a href="${escapeHtml(orderUrl)}"
+             style="display:inline-block;background:#d4af37;color:#0a0a0a;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700;">
+            Baixar fotos
+          </a>
+        </td></tr>
+        <tr><td style="color:#9a9284;font-size:12px;line-height:1.4;">
+          E-mail autom\u00e1tico \u2014 n\u00e3o responda.<br/>
+          <a href="${SITE_BASE}" style="color:#d4af37;">nox-fotografia.com.br</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    try {
+      await addDoc(collection(this.firestore, 'mail'), {
+        to: [to],
+        message: { subject, text, html },
+      });
+    } catch (err) {
+      console.error('[MailService.notifyOrderPaid]', err);
+      if (err instanceof FirebaseError && err.code === 'permission-denied') {
+        throw new Error(
+          'Sem permiss\u00e3o para enviar e-mail. Publique as rules da cole\u00e7\u00e3o mail no Firebase.'
+        );
       }
       throw err;
     }

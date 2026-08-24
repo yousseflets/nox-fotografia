@@ -1,6 +1,13 @@
 export type SalePaymentMethod = 'pix' | 'credit_card';
 export type SaleOrderStatus = 'pending' | 'paid' | 'cancelled' | 'failed';
 
+export const SALE_ORDER_STATUS_LABELS: Record<SaleOrderStatus, string> = {
+  pending: 'Aguardando Pix',
+  paid: 'Pago',
+  cancelled: 'Cancelado',
+  failed: 'Falhou',
+};
+
 export interface SaleOrderItem {
   photoId: string;
   eventId: string;
@@ -14,6 +21,11 @@ export interface SaleOrderBuyer {
   email: string;
   phone: string;
   cpf: string;
+}
+
+export interface SaleOrderDownloadFile {
+  filename: string;
+  url: string;
 }
 
 export interface SaleOrder {
@@ -30,4 +42,5 @@ export interface SaleOrder {
   accessToken?: string;
   createdAt: string;
   paidAt?: string;
+  downloadFiles?: SaleOrderDownloadFile[];
 }

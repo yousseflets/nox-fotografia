@@ -10,6 +10,7 @@ import {
   where,
   onSnapshot,
   getDocs,
+  getDoc,
 } from '@angular/fire/firestore';
 import {
   Storage,
@@ -22,7 +23,7 @@ import { Functions, httpsCallable } from '@angular/fire/functions';
 import { Observable, catchError, of } from 'rxjs';
 import { SaleEvent, slugify } from '../models/sale-event.model';
 import { SalePhoto, salePhotoPreview } from '../models/sale-photo.model';
-import { SaleOrder, SaleOrderBuyer, SalePaymentMethod } from '../models/sale-order.model';
+import { SaleOrder, SaleOrderBuyer, SaleOrderItem, SaleOrderStatus, SalePaymentMethod, SaleOrderDownloadFile } from '../models/sale-order.model';
 import { createImageThumbnail } from '../utils/image-thumbnail';
 import { createWatermarkedPreview } from '../utils/image-watermark';
 
@@ -227,6 +228,72 @@ export class SaleService {
     }
   }
 
+  async createPixOrder(input: {
+    eventId: string;
+    photoIds: string[];
+    buyer: SaleOrderBuyer;
+    items: SaleOrderItem[];
+  }): Promise<{ orderId: string; accessToken: string }> {
+    const eventSnap = await getDoc(doc(this.firestore, `saleEvents/${input.eventId}`));
+    if (!eventSnap.exists()) {
+      throw new Error('Evento nao encontrado.');
+    }
+    const event = eventSnap.data() as SaleEvent;
+    if (!event.active) {
+      throw new Error('Evento indisponivel.');
+    }
+
+    const priceCents = Number(event.priceCents);
+    if (!Number.isFinite(priceCents) || priceCents < 1) {
+      throw new Error('Preco do evento invalido.');
+    }
+
+    const photoSnaps = await Promise.all(
+      input.photoIds.map((id) => getDoc(doc(this.firestore, `salePhotos/${id}`)))
+    );
+
+    const items: SaleOrderItem[] = [];
+    for (let i = 0; i < photoSnaps.length; i++) {
+      const snap = photoSnaps[i];
+      if (!snap.exists()) {
+        throw new Error(`Foto nao encontrada: ${input.photoIds[i]}`);
+      }
+      const photo = snap.data() as SalePhoto;
+      if (photo.eventId !== input.eventId) {
+        throw new Error('Foto nao pertence ao evento.');
+      }
+      items.push({
+        photoId: snap.id,
+        eventId: input.eventId,
+        filename: photo.filename,
+        previewUrl: photo.thumbUrl || photo.previewUrl,
+        priceCents,
+      });
+    }
+
+    const totalCents = items.length * priceCents;
+    const accessToken = crypto.randomUUID().replace(/-/g, '');
+
+    const orderRef = await addDoc(collection(this.firestore, 'orders'), {
+      eventId: input.eventId,
+      eventTitle: event.title,
+      items,
+      buyer: {
+        name: input.buyer.name.trim(),
+        email: input.buyer.email.trim().toLowerCase(),
+        phone: input.buyer.phone.trim(),
+        cpf: input.buyer.cpf.replace(/\D/g, ''),
+      },
+      paymentMethod: 'pix',
+      status: 'pending',
+      totalCents,
+      accessToken,
+      createdAt: new Date().toISOString(),
+    });
+
+    return { orderId: orderRef.id, accessToken };
+  }
+
   async createCheckout(input: {
     eventId: string;
     photoIds: string[];
@@ -249,6 +316,69 @@ export class SaleService {
     >(this.functions, 'createSaleCheckout');
     const result = await callable(input);
     return result.data;
+  }
+
+  getOrders(): Observable<SaleOrder[]> {
+    const q = query(collection(this.firestore, 'orders'));
+    return new Observable<SaleOrder[]>((subscriber) => {
+      const unsub = onSnapshot(
+        q,
+        (snap) => {
+          const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SaleOrder);
+          items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+          subscriber.next(items);
+        },
+        (err) => {
+          console.error('[SaleService.getOrders]', err);
+          subscriber.error(err);
+        }
+      );
+      return () => unsub();
+    });
+  }
+
+  async updateOrderStatus(orderId: string, status: SaleOrderStatus): Promise<void> {
+    const payload: Partial<Pick<SaleOrder, 'status' | 'paidAt'>> = { status };
+    if (status === 'paid') {
+      payload.paidAt = new Date().toISOString();
+    }
+    await updateDoc(doc(this.firestore, `orders/${orderId}`), payload);
+  }
+
+  /** Gera URLs de download (admin autenticado) e grava no pedido. */
+  async prepareOrderDownloads(orderId: string): Promise<SaleOrderDownloadFile[]> {
+    const orderSnap = await getDoc(doc(this.firestore, `orders/${orderId}`));
+    if (!orderSnap.exists()) {
+      throw new Error('Pedido n\u00e3o encontrado.');
+    }
+    const order = { id: orderSnap.id, ...orderSnap.data() } as SaleOrder;
+    if (order.status !== 'paid') {
+      throw new Error('Confirme o pagamento antes de liberar os downloads.');
+    }
+
+    const files: SaleOrderDownloadFile[] = [];
+    for (const item of order.items) {
+      const photoSnap = await getDoc(doc(this.firestore, `salePhotos/${item.photoId}`));
+      if (!photoSnap.exists()) {
+        throw new Error(`Foto n\u00e3o encontrada: ${item.filename}`);
+      }
+      const photo = photoSnap.data() as SalePhoto;
+      if (!photo.storagePath) {
+        throw new Error(`Arquivo original ausente: ${item.filename}`);
+      }
+      const url = await getDownloadURL(ref(this.storage, photo.storagePath));
+      files.push({
+        filename: photo.filename || item.filename,
+        url,
+      });
+    }
+
+    if (!files.length) {
+      throw new Error('Nenhuma foto encontrada neste pedido.');
+    }
+
+    await updateDoc(doc(this.firestore, `orders/${orderId}`), { downloadFiles: files });
+    return files;
   }
 
   getOrder(orderId: string): Observable<SaleOrder | undefined> {

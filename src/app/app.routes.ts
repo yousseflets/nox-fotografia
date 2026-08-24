@@ -95,6 +95,20 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'pedidos',
+        loadComponent: () =>
+          import('./pages/admin/orders/admin-orders.component').then(
+            (m) => m.AdminOrdersComponent
+          ),
+      },
+      {
+        path: 'agenda',
+        loadComponent: () =>
+          import('./pages/admin/agenda/admin-agenda.component').then(
+            (m) => m.AdminAgendaComponent
+          ),
+      },
+      {
         path: 'depoimentos',
         loadComponent: () =>
           import('./pages/admin/testimonials/admin-testimonials.component').then(

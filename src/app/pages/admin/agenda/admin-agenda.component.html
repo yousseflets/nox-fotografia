@@ -1,0 +1,257 @@
+<section class="page">
+  <header>
+    <p class="page-kicker">Ensaios</p>
+    <h1>Agenda</h1>
+    <p>Clique em um dia para agendar. Gerencie os ensaios abaixo.</p>
+  </header>
+
+  @if (message()) {
+    <p class="ok page-msg">{{ message() }}</p>
+  }
+  @if (error() && !modalOpen()) {
+    <p class="err page-msg">{{ error() }}</p>
+  }
+
+  <div class="layout">
+    <div class="panel calendar-panel">
+      <div class="calendar-head">
+        <button type="button" class="btn btn-outline btn-sm" (click)="prevMonth()" aria-label="Mes anterior">
+          &larr;
+        </button>
+        <div class="calendar-title">
+          <h2>{{ monthLabel() }}</h2>
+          <button type="button" class="btn btn-ghost btn-sm" (click)="goToday()">Hoje</button>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" (click)="nextMonth()" aria-label="Proximo mes">
+          &rarr;
+        </button>
+      </div>
+
+      <div class="calendar-grid" role="grid" aria-label="Calendario mensal">
+        @for (wd of weekdays; track wd) {
+          <div class="calendar-weekday" role="columnheader">{{ wd }}</div>
+        }
+        @for (week of calendarWeeks(); track week[0].key) {
+          @for (day of week; track day.key) {
+            <button
+              type="button"
+              class="calendar-day"
+              role="gridcell"
+              [class.calendar-day--muted]="!day.inMonth"
+              [class.calendar-day--today]="day.isToday"
+              [class.calendar-day--selected]="selectedDate() === day.key"
+              [class.calendar-day--has]="countsByDate()[day.key]"
+              [class.calendar-day--past]="day.isPast"
+              [disabled]="day.isPast"
+              (click)="selectDay(day.key, day.inMonth, day.isPast)"
+            >
+              <span class="calendar-day__num">{{ day.day }}</span>
+              @if (countsByDate()[day.key]; as count) {
+                <span class="calendar-day__count">{{ count }}</span>
+              }
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="panel list-panel">
+      <div class="list-head">
+        <div class="list-head__top">
+          <h2>{{ listTitle() }}</h2>
+          @if (selectedDate()) {
+            <button type="button" class="btn btn-ghost btn-sm" (click)="clearSelectedDay()">
+              Ver m&ecirc;s inteiro
+            </button>
+          }
+        </div>
+        <div class="filters" role="group" aria-label="Filtrar por status">
+          @for (f of filters; track f.id) {
+            <button
+              type="button"
+              class="filter"
+              [class.filter--active]="statusFilter() === f.id"
+              (click)="setFilter(f.id)"
+            >
+              {{ f.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (listError()) {
+        <p class="err">{{ listError() }}</p>
+        <button type="button" class="btn btn-outline btn-sm" (click)="reloadList()">
+          Tentar novamente
+        </button>
+      }
+
+      <ul>
+        @for (item of filtered(); track item.id) {
+          <li>
+            <div class="item-text">
+              <div class="item-top">
+                <strong>{{ item.clientName }}</strong>
+                <span class="badge" [attr.data-status]="item.status">
+                  {{ statusLabels[item.status] }}
+                </span>
+              </div>
+              <span class="when">{{ formatWhen(item) }}</span>
+              <span class="meta">
+                {{ item.type }}
+                @if (item.phone) { &middot; {{ item.phone }} }
+                @if (item.location) { &middot; {{ item.location }} }
+              </span>
+              @if (item.notes) {
+                <span class="notes">{{ item.notes }}</span>
+              }
+            </div>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                [disabled]="loading()"
+                (click)="startEdit(item)"
+              >
+                Editar
+              </button>
+              @if (item.status === 'pending') {
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  [disabled]="loading()"
+                  (click)="setStatus(item, 'confirmed')"
+                >
+                  Confirmar
+                </button>
+              }
+              @if (item.status !== 'cancelled' && item.status !== 'done') {
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  [disabled]="loading()"
+                  (click)="setStatus(item, 'cancelled')"
+                >
+                  Cancelar
+                </button>
+              }
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">Nenhum agendamento neste per&iacute;odo.</li>
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h2>
+          @if (editingId()) {
+            Editar agendamento
+          } @else {
+            Novo agendamento
+          }
+        </h2>
+        <button type="button" class="modal-close" (click)="closeModal()" aria-label="Fechar">&times;</button>
+      </div>
+
+      @if (form.getRawValue().date) {
+        <p class="modal-date">{{ formatDateLabel(form.getRawValue().date) }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-field">
+          <label for="clientName">Nome do cliente</label>
+          <input id="clientName" formControlName="clientName" placeholder="Nome completo" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="phone">Telefone / WhatsApp</label>
+            <input id="phone" formControlName="phone" placeholder="(11) 99999-9999" />
+          </div>
+          <div class="form-field">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" formControlName="email" placeholder="opcional" />
+          </div>
+        </div>
+
+        <div class="form-row form-row--3">
+          <div class="form-field">
+            <label for="type">Tipo de ensaio</label>
+            <input id="type" formControlName="type" placeholder="Gestante, casal..." />
+          </div>
+          <div class="form-field">
+            <label for="location">Local</label>
+            <input id="location" formControlName="location" placeholder="Est&uacute;dio, parque..." />
+          </div>
+          <div class="form-field">
+            <label for="status">Status</label>
+            <select id="status" formControlName="status">
+              <option value="pending">Pendente</option>
+              <option value="confirmed">Confirmado</option>
+              <option value="done">Conclu&iacute;do</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="date">Data</label>
+            <input
+              id="date"
+              type="date"
+              formControlName="date"
+              [attr.min]="editingId() ? null : todayKey"
+            />
+          </div>
+          <div class="form-field">
+            <label for="time">Hor&aacute;rio</label>
+            <input id="time" type="time" formControlName="time" />
+          </div>
+        </div>
+
+
+
+        <div class="form-field">
+          <label for="notes">Observa&ccedil;&otilde;es</label>
+          <textarea id="notes" rows="3" formControlName="notes" placeholder="Detalhes do ensaio"></textarea>
+        </div>
+
+        @if (error()) {
+          <p class="err">{{ error() }}</p>
+        }
+
+        <div class="form-actions">
+          <button class="btn btn-outline btn-sm" type="button" (click)="closeModal()">
+            Fechar
+          </button>
+          @if (editingId()) {
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              [disabled]="loading()"
+              (click)="removeEditing()"
+            >
+              Excluir
+            </button>
+          }
+          <button class="btn btn-primary" type="submit" [disabled]="loading()">
+            @if (loading()) {
+              Salvando...
+            } @else if (editingId()) {
+              Salvar
+            } @else {
+              Cadastrar
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

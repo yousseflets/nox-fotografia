@@ -21,7 +21,7 @@ export class NavbarComponent {
     { label: 'Portf\u00f3lio', href: '#portfolio' },
     { label: 'Depoimentos', href: '#depoimentos' },
     { label: 'Contato', href: '#contato' },
-   // { label: 'Fotos \u00e0 Venda', href: '/fotos', routerLink: true },
+    //{ label: 'Fotos \u00e0 Venda', href: '/fotos', routerLink: true },
   ];
 
   @HostListener('window:scroll')

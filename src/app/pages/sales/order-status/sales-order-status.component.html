@@ -8,7 +8,7 @@
       <p class="kicker">Pedido</p>
       <h1>
         @if (order.status === 'paid') { Pagamento aprovado }
-        @else if (order.status === 'pending') { Aguardando pagamento }
+        @else if (order.status === 'pending') { Pague com Pix }
         @else { Pedido {{ order.status }} }
       </h1>
       <p>{{ order.eventTitle }} &middot; {{ formatPrice(order.totalCents) }}</p>
@@ -17,21 +17,54 @@
     @if (order.status === 'paid') {
       <div class="panel">
         <p>Suas fotos sem marca d'&aacute;gua est&atilde;o prontas.</p>
-        <button class="btn btn-primary" type="button" [disabled]="loadingDownloads()" (click)="loadDownloads()">
-          {{ loadingDownloads() ? 'Gerando links...' : 'Liberar downloads' }}
-        </button>
-        @if (error()) { <p class="err">{{ error() }}</p> }
-        <ul>
-          @for (file of downloads(); track file.url) {
-            <li>
-              <a [href]="file.url" target="_blank" rel="noopener">{{ file.filename }}</a>
-            </li>
-          }
-        </ul>
+
+        @if (downloads().length) {
+          <ul>
+            @for (file of downloads(); track file.url) {
+              <li>
+                <a [href]="file.url" target="_blank" rel="noopener" download>{{ file.filename }}</a>
+              </li>
+            }
+          </ul>
+        } @else {
+          <button class="btn btn-primary" type="button" [disabled]="loadingDownloads()" (click)="loadDownloads()">
+            {{ loadingDownloads() ? 'Carregando...' : 'Liberar downloads' }}
+          </button>
+          @if (error()) { <p class="err">{{ error() }}</p> }
+          <p class="pix-note">Se acabou de pagar, aguarde a confirma&ccedil;&atilde;o da NOX e atualize esta p&aacute;gina.</p>
+        }
       </div>
     } @else if (order.status === 'pending') {
-      <div class="panel">
-        <p>Se voc&ecirc; j&aacute; pagou, aguarde alguns segundos e atualize a p&aacute;gina.</p>
+      <div class="panel pix-panel">
+        <p class="pix-lead">Escaneie o QR Code ou copie o Pix abaixo para pagar.</p>
+        <p class="pix-amount">{{ formatPrice(order.totalCents) }}</p>
+
+        @if (qrImageUrl()) {
+          <div class="pix-qr">
+            <img [src]="qrImageUrl()" width="280" height="280" alt="QR Code Pix" />
+          </div>
+        }
+
+        <div class="pix-copy">
+          <label>Chave Pix</label>
+          <code>{{ pixKey }}</code>
+        </div>
+
+        <div class="pix-copy">
+          <label>Copia e cola</label>
+          <textarea readonly rows="4">{{ pixPayload() }}</textarea>
+        </div>
+
+        <div class="pix-actions">
+          <button type="button" class="btn btn-primary" (click)="copyPix()">
+            @if (copied()) { Copiado! } @else { Copiar c&oacute;digo Pix }
+          </button>
+        </div>
+
+        <p class="pix-note">
+          Ap&oacute;s o pagamento, a NOX confirma manualmente e voc&ecirc; poder&aacute; baixar as fotos nesta p&aacute;gina.
+          Guarde este link: pedido <strong>#{{ order.id }}</strong>.
+        </p>
       </div>
     }
   } @else {

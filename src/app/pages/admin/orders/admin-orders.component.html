@@ -1,0 +1,117 @@
+<section class="page">
+  <header>
+    <p class="page-kicker">Fotos &agrave; venda</p>
+    <h1>Pedidos</h1>
+    <p>
+      Confirme pagamentos Pix manualmente ap&oacute;s verificar o extrato.
+      @if (pendingCount() > 0) {
+        <strong>{{ pendingCount() }} aguardando confirma&ccedil;&atilde;o.</strong>
+      }
+    </p>
+  </header>
+
+  @if (message()) {
+    <p class="ok page-msg">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="err page-msg">{{ error() }}</p>
+  }
+
+  <div class="panel list-panel">
+    <div class="list-head">
+      <h2>Lista de pedidos</h2>
+      <div class="filters" role="group" aria-label="Filtrar por status">
+        @for (f of filters; track f.id) {
+          <button
+            type="button"
+            class="filter"
+            [class.filter--active]="statusFilter() === f.id"
+            (click)="setFilter(f.id)"
+          >
+            {{ f.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    @if (listError()) {
+      <p class="err">{{ listError() }}</p>
+      <button type="button" class="btn btn-outline btn-sm" (click)="reloadList()">
+        Tentar novamente
+      </button>
+    }
+
+    <ul>
+      @for (order of filtered(); track order.id) {
+        <li>
+          <div class="item-text">
+            <div class="item-top">
+              <strong>{{ order.buyer.name }}</strong>
+              <span class="badge" [attr.data-status]="order.status">
+                {{ statusLabels[order.status] }}
+              </span>
+            </div>
+            <span class="when">{{ formatWhen(order) }}</span>
+            <span class="meta">
+              {{ order.eventTitle }}
+              &middot; {{ order.items.length }} foto{{ order.items.length === 1 ? '' : 's' }}
+              &middot; {{ formatPrice(order.totalCents) }}
+            </span>
+            <span class="meta">
+              {{ order.buyer.email }}
+              @if (order.buyer.phone) {
+                &middot; {{ order.buyer.phone }}
+              }
+            </span>
+            <span class="meta order-id">Pedido #{{ order.id }}</span>
+          </div>
+
+          <div class="row-actions">
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              [disabled]="loading()"
+              (click)="copyLink(order)"
+            >
+              @if (copiedId() === order.id) {
+                Link copiado
+              } @else {
+                Copiar link
+              }
+            </button>
+
+            @if (order.status === 'pending') {
+              <button
+                type="button"
+                class="btn btn-success btn-sm"
+                [disabled]="loading()"
+                (click)="confirmPayment(order)"
+              >
+                Confirmar pagamento
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                [disabled]="loading()"
+                (click)="cancelOrder(order)"
+              >
+                Cancelar
+              </button>
+            } @else if (order.status === 'paid' && !order.downloadFiles?.length) {
+              <button
+                type="button"
+                class="btn btn-success btn-sm"
+                [disabled]="loading()"
+                (click)="regenerateDownloads(order)"
+              >
+                Gerar links
+              </button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li class="empty">Nenhum pedido neste filtro.</li>
+      }
+    </ul>
+  </div>
+</section>

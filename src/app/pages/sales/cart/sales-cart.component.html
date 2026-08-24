@@ -64,21 +64,12 @@
         </div>
 
         <h2>Pagamento</h2>
-        <div class="pay-options">
-          <label class="pay">
-            <input type="radio" formControlName="paymentMethod" value="pix" />
-            <span>Pix</span>
-          </label>
-          <label class="pay">
-            <input type="radio" formControlName="paymentMethod" value="credit_card" />
-            <span>Cart&atilde;o de cr&eacute;dito</span>
-          </label>
-        </div>
+        <p class="pay-info">Pagamento via <strong>Pix</strong>. Ao confirmar, voc&ecirc; ver&aacute; o QR Code da conta.</p>
 
         @if (error()) { <p class="err">{{ error() }}</p> }
 
         <button class="btn btn-primary" type="submit" [disabled]="loading()">
-          {{ loading() ? 'Redirecionando...' : 'Pagar agora' }}
+          {{ loading() ? 'Gerando Pix...' : 'Gerar Pix' }}
         </button>
       </form>
     </div>

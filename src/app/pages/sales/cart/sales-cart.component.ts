@@ -4,9 +4,9 @@ import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { SaleService } from '../../../core/services/sale.service';
 import { formatPriceBRL } from '../../../core/models/sale-event.model';
-import { SalePaymentMethod } from '../../../core/models/sale-order.model';
 import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { FooterComponent } from '../../../shared/components/footer/footer.component';
+import { FirebaseError } from 'firebase/app';
 
 @Component({
   selector: 'app-sales-cart',
@@ -30,7 +30,6 @@ export class SalesCartComponent {
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     cpf: ['', [Validators.required, Validators.minLength(11)]],
-    paymentMethod: ['pix' as SalePaymentMethod, Validators.required],
   });
 
   remove(photoId: string) {
@@ -49,7 +48,6 @@ export class SalesCartComponent {
       return;
     }
 
-    // Um pedido por evento (primeiro evento do carrinho; se misturar, filtra)
     const eventId = items[0].eventId;
     const photoIds = items.filter((i) => i.eventId === eventId).map((i) => i.photoId);
     if (photoIds.length !== items.length) {
@@ -61,42 +59,30 @@ export class SalesCartComponent {
     this.error.set('');
     try {
       const v = this.form.getRawValue();
-      const result = await this.sales.createCheckout({
+      const result = await this.sales.createPixOrder({
         eventId,
         photoIds,
+        items,
         buyer: {
           name: v.name.trim(),
           email: v.email.trim(),
           phone: v.phone.trim(),
           cpf: v.cpf.replace(/\D/g, ''),
         },
-        paymentMethod: v.paymentMethod,
       });
 
       this.cart.clear();
-      const url = result.initPoint || result.sandboxInitPoint;
-      if (url) {
-        window.location.href = url;
-        return;
-      }
       await this.router.navigate(['/fotos/pedido', result.orderId], {
-        queryParams: result.accessToken ? { token: result.accessToken } : undefined,
+        queryParams: { token: result.accessToken },
       });
     } catch (err) {
       console.error('[checkout]', err);
-      const code = String((err as { code?: string })?.code || '');
-      if (code.includes('not-found') || code.includes('unimplemented')) {
+      if (err instanceof FirebaseError && err.code === 'permission-denied') {
         this.error.set(
-          'Pagamento ainda n\u00e3o dispon\u00edvel: as Cloud Functions do Mercado Pago n\u00e3o foram publicadas.'
-        );
-      } else if (code.includes('failed-precondition')) {
-        this.error.set(
-          'Mercado Pago sem Access Token. Configure o secret MP_ACCESS_TOKEN nas Functions.'
+          'Sem permiss\u00e3o para criar pedido. Publique as rules da cole\u00e7\u00e3o orders no Firebase.'
         );
       } else {
-        this.error.set(
-          'N\u00e3o foi poss\u00edvel iniciar o pagamento. Confira se o Mercado Pago est\u00e1 configurado.'
-        );
+        this.error.set('N\u00e3o foi poss\u00edvel gerar o Pix. Tente novamente.');
       }
     } finally {
       this.loading.set(false);
