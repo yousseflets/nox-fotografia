@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Firestore, addDoc, collection } from '@angular/fire/firestore';
 import { FirebaseError } from 'firebase/app';
 import { MAIL_ICON_PNG_BASE64 } from './mail-icons';
+import { MAIL_LOGO_PNG_BASE64 } from './mail-logo';
 import { formatPriceBRL } from '../models/sale-event.model';
 import { environment } from '../../../environments/environment';
 
@@ -21,7 +22,7 @@ export type OrderPaidMailInput = {
 };
 
 const SITE_BASE = environment.siteUrl.replace(/\/$/, '');
-const LOGO_URL = `${SITE_BASE}/nox-logo.png`;
+const LOGO_CID = 'cid:nox-logo';
 const WHATSAPP = '(11) 98927-3898';
 const WHATSAPP_URL = 'https://wa.me/5511989273898';
 
@@ -62,7 +63,7 @@ export class MailService {
       name: escapeHtml(name),
       areaUrl: escapeHtml(areaUrl),
       loginUrl: escapeHtml(loginUrl),
-      logoUrl: escapeHtml(LOGO_URL),
+      logoUrl: LOGO_CID,
       siteUrl: escapeHtml(SITE_BASE),
       whatsapp: escapeHtml(WHATSAPP),
       whatsappUrl: escapeHtml(WHATSAPP_URL),
@@ -81,6 +82,7 @@ export class MailService {
           text,
           html,
           attachments: [
+            iconAttachment('nox-logo.png', 'nox-logo', MAIL_LOGO_PNG_BASE64),
             iconAttachment('camera.png', 'nox-camera', MAIL_ICON_PNG_BASE64.camera),
             iconAttachment('user.png', 'nox-user', MAIL_ICON_PNG_BASE64.user),
             iconAttachment('lock.png', 'nox-lock', MAIL_ICON_PNG_BASE64.lock),
@@ -132,7 +134,7 @@ export class MailService {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#141414;border:1px solid #d4af37;border-radius:12px;padding:28px;">
         <tr><td align="center" style="padding-bottom:16px;">
-          <img src="${LOGO_URL}" alt="NOX Fotografia" width="120" style="display:block;" />
+          <img src="${LOGO_CID}" alt="NOX Fotografia" width="120" style="display:block;" />
         </td></tr>
         <tr><td style="color:#d4af37;font-size:22px;padding-bottom:12px;">Pagamento confirmado</td></tr>
         <tr><td style="color:#f5f0e6;font-size:16px;line-height:1.5;padding-bottom:12px;">
@@ -158,7 +160,12 @@ export class MailService {
     try {
       await addDoc(collection(this.firestore, 'mail'), {
         to: [to],
-        message: { subject, text, html },
+        message: {
+          subject,
+          text,
+          html,
+          attachments: [iconAttachment('nox-logo.png', 'nox-logo', MAIL_LOGO_PNG_BASE64)],
+        },
       });
     } catch (err) {
       console.error('[MailService.notifyOrderPaid]', err);
