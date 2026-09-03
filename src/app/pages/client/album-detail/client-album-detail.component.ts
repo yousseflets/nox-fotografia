@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -7,7 +7,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
-import { Photo, photoThumbUrl } from '../../../core/models/photo.model';
+import { Photo, photoDisplayUrl, photoThumbUrl } from '../../../core/models/photo.model';
 import {
   ALBUM_PHOTOS_PAGE_SIZE,
   paginateItems,
@@ -25,6 +25,7 @@ export class ClientAlbumDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly albums = inject(AlbumService);
   private readonly photos = inject(PhotoService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly pageSize = ALBUM_PHOTOS_PAGE_SIZE;
   readonly albumId = this.route.snapshot.paramMap.get('id') ?? '';
@@ -32,6 +33,10 @@ export class ClientAlbumDetailComponent {
   readonly downloadingId = signal<string | null>(null);
   readonly loadedIds = signal<Record<string, boolean>>({});
   readonly page = signal(1);
+  readonly viewerIndex = signal<number | null>(null);
+  readonly fullReadyIds = signal<Record<string, boolean>>({});
+  private swipeStartX = 0;
+  private readonly preloadedUrls = new Set<string>();
 
   readonly album$ = this.albums.getById(this.albumId);
   readonly photos$ = this.photos.getByAlbum(this.albumId);
@@ -52,7 +57,58 @@ export class ClientAlbumDetailComponent {
   );
   readonly showPager = computed(() => this.allPhotos().length > 0);
 
+  readonly viewer = computed(() => {
+    const index = this.viewerIndex();
+    if (index === null) return null;
+    const list = this.allPhotos();
+    const photo = list[index];
+    if (!photo) return null;
+    const id = photo.id || photo.storagePath || String(index);
+    const thumb = photoThumbUrl(photo);
+    const display = photoDisplayUrl(photo);
+    return {
+      index,
+      photo,
+      id,
+      total: list.length,
+      isFirst: index <= 0,
+      isLast: index >= list.length - 1,
+      thumb,
+      display,
+      fullReady: this.fullReadyIds()[id] === true,
+    };
+  });
+
+  readonly filmstrip = computed(() => {
+    const view = this.viewer();
+    if (!view) return [];
+    const list = this.allPhotos();
+    const size = Math.min(9, list.length);
+    let start = Math.max(0, view.index - Math.floor(size / 2));
+    const end = Math.min(list.length, start + size);
+    start = Math.max(0, end - size);
+    return list.slice(start, end).map((photo, offset) => {
+      const index = start + offset;
+      return {
+        photo,
+        index,
+        active: index === view.index,
+      };
+    });
+  });
+
   readonly thumbUrl = photoThumbUrl;
+
+  constructor() {
+    effect(() => {
+      const view = this.viewer();
+      document.body.style.overflow = view ? 'hidden' : '';
+      if (view) this.preloadAround(view.index);
+    });
+    this.destroyRef.onDestroy(() => {
+      document.body.style.overflow = '';
+    });
+  }
 
   markLoaded(id: string | undefined) {
     if (!id) return;
@@ -69,6 +125,90 @@ export class ClientAlbumDetailComponent {
     this.page.set(Math.min(max, Math.max(1, page)));
   }
 
+  openViewer(indexOnPage: number) {
+    this.goToViewerPhoto(this.photoNumber(indexOnPage) - 1);
+  }
+
+  goToViewerPhoto(index: number, event?: Event) {
+    event?.stopPropagation();
+    if (index < 0 || index >= this.allPhotos().length) return;
+    this.viewerIndex.set(index);
+    this.syncPageToViewer();
+  }
+
+  markFullReady(id: string) {
+    this.fullReadyIds.update((map) => (map[id] ? map : { ...map, [id]: true }));
+  }
+
+  closeViewer() {
+    this.viewerIndex.set(null);
+  }
+
+  prevPhoto() {
+    const index = this.viewerIndex();
+    if (index === null || index <= 0) return;
+    this.viewerIndex.set(index - 1);
+    this.syncPageToViewer();
+  }
+
+  nextPhoto() {
+    const index = this.viewerIndex();
+    if (index === null) return;
+    if (index >= this.allPhotos().length - 1) return;
+    this.viewerIndex.set(index + 1);
+    this.syncPageToViewer();
+  }
+
+  onViewerPointerDown(event: PointerEvent) {
+    this.swipeStartX = event.clientX;
+  }
+
+  onViewerPointerUp(event: PointerEvent) {
+    const dx = event.clientX - this.swipeStartX;
+    if (dx > 56) this.prevPhoto();
+    else if (dx < -56) this.nextPhoto();
+  }
+
+  photoBusy(photo: Photo): boolean {
+    const id = photo.id || photo.storagePath;
+    return this.zipping() || this.downloadingId() === id;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent) {
+    if (this.viewerIndex() === null) return;
+    if (event.key === 'Escape') this.closeViewer();
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      this.prevPhoto();
+    }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      this.nextPhoto();
+    }
+  }
+
+  private preloadAround(index: number) {
+    const list = this.allPhotos();
+    for (const offset of [-1, 1, 2]) {
+      const photo = list[index + offset];
+      if (!photo) continue;
+      const url = photoDisplayUrl(photo);
+      if (this.preloadedUrls.has(url)) continue;
+      this.preloadedUrls.add(url);
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = url;
+    }
+  }
+
+  private syncPageToViewer() {
+    const index = this.viewerIndex();
+    if (index === null) return;
+    const page = Math.floor(index / this.pageSize) + 1;
+    if (this.page() !== page) this.page.set(page);
+  }
+
   async downloadOne(photo: Photo, index = 0) {
     const id = photo.id ?? photo.storagePath ?? String(index);
     this.downloadingId.set(id);
@@ -80,7 +220,7 @@ export class ClientAlbumDetailComponent {
       saveAs(blob, name);
     } catch (err) {
       console.error('[downloadOne]', err);
-      alert('Não foi possível baixar esta foto. Tente novamente.');
+      alert('NÃ£o foi possÃ­vel baixar esta foto. Tente novamente.');
     } finally {
       this.downloadingId.set(null);
     }
@@ -120,7 +260,7 @@ export class ClientAlbumDetailComponent {
       saveAs(content, `${folderName}.zip`);
     } catch (err) {
       console.error('[downloadAll]', err);
-      alert('Não foi possível gerar o ZIP. Tente baixar as fotos individualmente.');
+      alert('NÃ£o foi possÃ­vel gerar o ZIP. Tente baixar as fotos individualmente.');
     } finally {
       this.zipping.set(false);
     }

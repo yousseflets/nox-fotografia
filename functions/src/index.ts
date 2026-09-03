@@ -301,7 +301,7 @@ export const createInfinitePayCheckout = onCall({ cors: true }, async (request) 
     items: items.map((item) => ({
       quantity: 1,
       price: item.priceCents,
-      description: `${eventTitle} — ${item.filename}`.slice(0, 250),
+      description: `${eventTitle} â€” ${item.filename}`.slice(0, 250),
     })),
   });
 
@@ -483,7 +483,7 @@ async function enqueuePaidEmail(input: {
   const orderUrl = `${base}/fotos/pedido/${input.orderId}?token=${input.accessToken}`;
   const name = input.name.trim() || 'cliente';
   const total = formatPriceBRL(input.totalCents);
-  const subject = `NOX Fotografia — Pagamento confirmado (${input.eventTitle})`;
+  const subject = `NOX Fotografia â€” Pagamento confirmado (${input.eventTitle})`;
   const text = [
     `Ola, ${name}!`,
     '',
@@ -519,7 +519,7 @@ async function enqueuePaidEmail(input: {
           </a>
         </td></tr>
         <tr><td style="color:#9a9284;font-size:12px;line-height:1.4;">
-          E-mail automatico — nao responda.<br/>
+          E-mail automatico â€” nao responda.<br/>
           <a href="${base}" style="color:#d4af37;">nox-fotografia.com.br</a>
         </td></tr>
       </table>

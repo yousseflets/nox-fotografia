@@ -26,9 +26,12 @@
     <div class="gallery" [class.gallery--empty]="photosReady() && !allPhotos().length">
       @for (photo of pagedPhotos(); track photo.id; let i = $index) {
         <figure>
-          <div
+          <button
+            type="button"
             class="thumb"
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
+            [attr.aria-label]="'Abrir foto ' + photoNumber(i)"
+            (click)="openViewer(i)"
           >
             <span class="thumb__num" aria-hidden="true">{{ photoNumber(i) }}</span>
             <img
@@ -39,20 +42,26 @@
               decoding="async"
               (load)="markLoaded(photo.id)"
             />
-          </div>
+          </button>
           <figcaption>
             <span>{{ photo.filename }}</span>
             <button
               type="button"
-              class="btn btn-ghost"
-              [disabled]="zipping() || downloadingId() === (photo.id || photo.storagePath)"
+              class="icon-btn"
+              [disabled]="photoBusy(photo)"
+              [attr.aria-label]="'Baixar ' + photo.filename"
               (click)="downloadOne(photo, photoNumber(i) - 1)"
             >
-              {{
-                downloadingId() === (photo.id || photo.storagePath)
-                  ? 'Baixando...'
-                  : 'Baixar'
-              }}
+              @if (downloadingId() === (photo.id || photo.storagePath)) {
+                <span class="icon-btn__status">...</span>
+              } @else {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.42L11 13.59V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z"
+                  />
+                </svg>
+              }
             </button>
           </figcaption>
         </figure>
@@ -95,3 +104,124 @@
     <p class="empty">&Aacute;lbum n&atilde;o encontrado ou sem permiss&atilde;o de acesso.</p>
   }
 </section>
+
+@if (viewer(); as view) {
+  <div
+    class="viewer"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Visualizar foto"
+    (click)="closeViewer()"
+  >
+    @if (!view.fullReady) {
+      <div class="viewer__progress" aria-hidden="true"></div>
+    }
+
+    <button
+      class="viewer__close"
+      type="button"
+      aria-label="Fechar"
+      (click)="closeViewer(); $event.stopPropagation()"
+    >
+      &times;
+    </button>
+
+    <div class="viewer__frame">
+      <button
+        type="button"
+        class="viewer__nav viewer__nav--prev"
+        aria-label="Foto anterior"
+        [disabled]="view.isFirst"
+        (click)="prevPhoto(); $event.stopPropagation()"
+      >
+        &#8249;
+      </button>
+
+      @for (id of [view.id]; track id) {
+        <div
+          class="viewer__media"
+          (click)="$event.stopPropagation()"
+          (pointerdown)="onViewerPointerDown($event)"
+          (pointerup)="onViewerPointerUp($event)"
+        >
+          @if (view.thumb !== view.display) {
+            <img
+              class="viewer__placeholder"
+              [src]="view.thumb"
+              alt=""
+              aria-hidden="true"
+              draggable="false"
+            />
+          }
+          <img
+            class="viewer__full"
+            [class.viewer__full--ready]="view.fullReady"
+            [src]="view.display"
+            [alt]="view.photo.filename"
+            decoding="async"
+            [attr.fetchpriority]="'high'"
+            draggable="false"
+            (load)="markFullReady(view.id)"
+            (error)="markFullReady(view.id)"
+          />
+        </div>
+      }
+
+      <button
+        type="button"
+        class="viewer__nav viewer__nav--next"
+        aria-label="Pr&oacute;xima foto"
+        [disabled]="view.isLast"
+        (click)="nextPhoto(); $event.stopPropagation()"
+      >
+        &#8250;
+      </button>
+    </div>
+
+    <div class="viewer__footer" (click)="$event.stopPropagation()">
+      <div class="viewer__meta">
+        <span>{{ view.index + 1 }} / {{ view.total }}</span>
+        <button
+          type="button"
+          class="icon-btn icon-btn--lg"
+          [disabled]="photoBusy(view.photo)"
+          [attr.aria-label]="'Baixar ' + view.photo.filename"
+          (click)="downloadOne(view.photo, view.index)"
+        >
+          @if (downloadingId() === (view.photo.id || view.photo.storagePath)) {
+            <span class="icon-btn__status">...</span>
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 3a1 1 0 0 1 1 1v9.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.42L11 13.59V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z"
+              />
+            </svg>
+          }
+        </button>
+      </div>
+
+      @if (filmstrip().length > 1) {
+        <div class="viewer__strip" role="list">
+          @for (item of filmstrip(); track item.photo.id || item.index) {
+            <button
+              type="button"
+              role="listitem"
+              [class.is-active]="item.active"
+              [attr.aria-label]="'Ir para foto ' + (item.index + 1)"
+              [attr.aria-current]="item.active ? 'true' : null"
+              (click)="goToViewerPhoto(item.index, $event)"
+            >
+              <img
+                [src]="thumbUrl(item.photo)"
+                [alt]="item.photo.filename"
+                loading="lazy"
+                decoding="async"
+              />
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

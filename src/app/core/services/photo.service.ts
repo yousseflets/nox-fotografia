@@ -56,7 +56,7 @@ export class PhotoService {
     );
   }
 
-  /** Capa do ·lbum: miniatura da foto mais recente (ou url original). */
+  /** Capa do √°lbum: miniatura da foto mais recente (ou url original). */
   async getAlbumCoverUrl(albumId: string): Promise<string | undefined> {
     const snap = await getDocs(
       query(collection(this.firestore, 'photos'), where('albumId', '==', albumId))
@@ -112,19 +112,32 @@ export class PhotoService {
     const thumbStoragePath = `${baseDir}/${stamp}_${safeName.replace(/\.[^.]+$/, '')}_thumb.jpg`;
 
     let thumbUrl: string | undefined;
+    let previewUrl: string | undefined;
     try {
-      const thumbBlob = await createImageThumbnail(file);
-      onProgress?.(5);
+      const thumbBlob = await createImageThumbnail(file, 480, 0.72);
+      onProgress?.(4);
       const thumb = await this.uploadBlob(thumbBlob, thumbStoragePath, (pct) =>
-        onProgress?.(5 + pct * 0.15)
+        onProgress?.(4 + pct * 0.08)
       );
       thumbUrl = thumb.url;
     } catch (err) {
-      console.warn('[PhotoService] miniatura n„o gerada', err);
+      console.warn('[PhotoService] miniatura n√£o gerada', err);
+    }
+
+    const previewStoragePath = `${baseDir}/${stamp}_${safeName.replace(/\.[^.]+$/, '')}_preview.jpg`;
+    try {
+      const previewBlob = await createImageThumbnail(file, 1600, 0.8);
+      onProgress?.(14);
+      const preview = await this.uploadBlob(previewBlob, previewStoragePath, (pct) =>
+        onProgress?.(14 + pct * 0.16)
+      );
+      previewUrl = preview.url;
+    } catch (err) {
+      console.warn('[PhotoService] preview n√£o gerada', err);
     }
 
     const original = await this.uploadBlob(file, storagePath, (pct) =>
-      onProgress?.(20 + pct * 0.8)
+      onProgress?.(30 + pct * 0.7)
     );
 
     const photo: Omit<Photo, 'id'> = {
@@ -134,6 +147,8 @@ export class PhotoService {
       storagePath,
       thumbUrl,
       thumbStoragePath: thumbUrl ? thumbStoragePath : undefined,
+      previewUrl,
+      previewStoragePath: previewUrl ? previewStoragePath : undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -143,12 +158,12 @@ export class PhotoService {
   }
 
   async deletePhoto(photo: Photo): Promise<void> {
-    for (const path of [photo.storagePath, photo.thumbStoragePath]) {
+    for (const path of [photo.storagePath, photo.thumbStoragePath, photo.previewStoragePath]) {
       if (!path) continue;
       try {
         await deleteObject(ref(this.storage, path));
       } catch {
-        // arquivo pode j· ter sido removido
+        // arquivo pode j√° ter sido removido
       }
     }
     if (photo.id) {
