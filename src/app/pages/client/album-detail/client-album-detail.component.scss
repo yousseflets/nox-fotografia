@@ -114,16 +114,43 @@ figure {
   line-height: 1;
 }
 
-.thumb img {
+.thumb img,
+.thumb video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.35s ease;
+  pointer-events: none;
 }
 
-.thumb:hover img {
+.thumb:hover img,
+.thumb:hover video {
   transform: scale(1.04);
+}
+
+.thumb__play {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: auto;
+  border: 1px solid var(--nox-gold);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.thumb__play::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 0.45rem 0 0.45rem 0.75rem;
+  border-color: transparent transparent transparent var(--nox-gold);
 }
 
 .thumb--loaded {
@@ -131,7 +158,8 @@ figure {
   background: #0a0a0a;
 }
 
-.thumb--loaded img {
+.thumb--loaded img,
+.thumb--loaded video {
   opacity: 1;
 }
 
@@ -318,15 +346,33 @@ figcaption span {
   touch-action: pan-y;
 }
 
+.viewer__still,
 .viewer__media img {
   position: absolute;
   inset: 0;
+}
+
+.viewer__still {
+  touch-action: pan-y;
+}
+
+.viewer__media img {
   margin: auto;
   max-width: 100%;
   max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
+}
+
+.viewer__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  z-index: 1;
 }
 
 .viewer__placeholder {
@@ -379,6 +425,7 @@ figcaption span {
 }
 
 .viewer__strip button {
+  position: relative;
   flex: 0 0 3rem;
   width: 3rem;
   height: 3rem;
@@ -395,6 +442,19 @@ figcaption span {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.strip-play {
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0.28rem 0 0.28rem 0.46rem;
+  border-color: transparent transparent transparent #fff;
+  pointer-events: none;
 }
 
 .viewer__strip button.is-active,

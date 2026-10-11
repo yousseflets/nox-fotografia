@@ -30,18 +30,31 @@
             type="button"
             class="thumb"
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
-            [attr.aria-label]="'Abrir foto ' + photoNumber(i)"
+            [attr.aria-label]="(isVideo(photo) ? 'Reproduzir ' : 'Abrir ') + photo.filename"
             (click)="openViewer(i)"
           >
             <span class="thumb__num" aria-hidden="true">{{ photoNumber(i) }}</span>
-            <img
-              [src]="thumbUrl(photo)"
-              [alt]="photo.filename"
-              [attr.loading]="i < 12 ? 'eager' : 'lazy'"
-              [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
-              decoding="async"
-              (load)="markLoaded(photo.id)"
-            />
+            @if (isVideo(photo) && !photo.thumbUrl) {
+              <video
+                [src]="photo.url"
+                muted
+                playsinline
+                preload="metadata"
+                (loadeddata)="markLoaded(photo.id)"
+              ></video>
+            } @else {
+              <img
+                [src]="thumbUrl(photo)"
+                [alt]="photo.filename"
+                [attr.loading]="i < 12 ? 'eager' : 'lazy'"
+                [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
+                decoding="async"
+                (load)="markLoaded(photo.id)"
+              />
+            }
+            @if (isVideo(photo)) {
+              <span class="thumb__play" aria-hidden="true"></span>
+            }
           </button>
           <figcaption>
             <span>{{ photo.filename }}</span>
@@ -110,7 +123,7 @@
     class="viewer"
     role="dialog"
     aria-modal="true"
-    aria-label="Visualizar foto"
+    aria-label="Visualizar"
     (click)="closeViewer()"
   >
     @if (!view.fullReady) {
@@ -138,32 +151,45 @@
       </button>
 
       @for (id of [view.id]; track id) {
-        <div
-          class="viewer__media"
-          (click)="$event.stopPropagation()"
-          (pointerdown)="onViewerPointerDown($event)"
-          (pointerup)="onViewerPointerUp($event)"
-        >
-          @if (view.thumb !== view.display) {
-            <img
-              class="viewer__placeholder"
-              [src]="view.thumb"
-              alt=""
-              aria-hidden="true"
-              draggable="false"
-            />
+        <div class="viewer__media" (click)="$event.stopPropagation()">
+          @if (view.isVideo) {
+            <video
+              class="viewer__video"
+              [src]="view.photo.url"
+              [poster]="view.photo.thumbUrl || view.photo.previewUrl || ''"
+              controls
+              playsinline
+              autoplay
+              (loadeddata)="markFullReady(view.id)"
+            ></video>
+          } @else {
+            <div
+              class="viewer__still"
+              (pointerdown)="onViewerPointerDown($event)"
+              (pointerup)="onViewerPointerUp($event)"
+            >
+              @if (view.thumb !== view.display) {
+                <img
+                  class="viewer__placeholder"
+                  [src]="view.thumb"
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                />
+              }
+              <img
+                class="viewer__full"
+                [class.viewer__full--ready]="view.fullReady"
+                [src]="view.display"
+                [alt]="view.photo.filename"
+                decoding="async"
+                [attr.fetchpriority]="'high'"
+                draggable="false"
+                (load)="markFullReady(view.id)"
+                (error)="markFullReady(view.id)"
+              />
+            </div>
           }
-          <img
-            class="viewer__full"
-            [class.viewer__full--ready]="view.fullReady"
-            [src]="view.display"
-            [alt]="view.photo.filename"
-            decoding="async"
-            [attr.fetchpriority]="'high'"
-            draggable="false"
-            (load)="markFullReady(view.id)"
-            (error)="markFullReady(view.id)"
-          />
         </div>
       }
 
@@ -212,12 +238,17 @@
               [attr.aria-current]="item.active ? 'true' : null"
               (click)="goToViewerPhoto(item.index, $event)"
             >
-              <img
-                [src]="thumbUrl(item.photo)"
-                [alt]="item.photo.filename"
-                loading="lazy"
-                decoding="async"
-              />
+              @if (!isVideo(item.photo) || item.photo.thumbUrl) {
+                <img
+                  [src]="item.photo.thumbUrl || thumbUrl(item.photo)"
+                  [alt]="item.photo.filename"
+                  loading="lazy"
+                  decoding="async"
+                />
+              }
+              @if (isVideo(item.photo)) {
+                <span class="strip-play" aria-hidden="true"></span>
+              }
             </button>
           }
         </div>

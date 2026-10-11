@@ -7,7 +7,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
-import { Photo, photoDisplayUrl, photoThumbUrl } from '../../../core/models/photo.model';
+import { Photo, photoDisplayUrl, photoThumbUrl, isVideoPhoto } from '../../../core/models/photo.model';
 import {
   ALBUM_PHOTOS_PAGE_SIZE,
   paginateItems,
@@ -75,6 +75,7 @@ export class ClientAlbumDetailComponent {
       isLast: index >= list.length - 1,
       thumb,
       display,
+      isVideo: isVideoPhoto(photo),
       fullReady: this.fullReadyIds()[id] === true,
     };
   });
@@ -98,6 +99,7 @@ export class ClientAlbumDetailComponent {
   });
 
   readonly thumbUrl = photoThumbUrl;
+  readonly isVideo = isVideoPhoto;
 
   constructor() {
     effect(() => {
@@ -192,7 +194,7 @@ export class ClientAlbumDetailComponent {
     const list = this.allPhotos();
     for (const offset of [-1, 1, 2]) {
       const photo = list[index + offset];
-      if (!photo) continue;
+      if (!photo || isVideoPhoto(photo)) continue;
       const url = photoDisplayUrl(photo);
       if (this.preloadedUrls.has(url)) continue;
       this.preloadedUrls.add(url);
@@ -272,6 +274,11 @@ export class ClientAlbumDetailComponent {
     if (lower.endsWith('.webp')) return 'image/webp';
     if (lower.endsWith('.gif')) return 'image/gif';
     if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+    if (lower.endsWith('.mp4') || lower.endsWith('.m4v')) return 'video/mp4';
+    if (lower.endsWith('.mov')) return 'video/quicktime';
+    if (lower.endsWith('.webm')) return 'video/webm';
+    if (lower.endsWith('.avi')) return 'video/x-msvideo';
+    if (lower.endsWith('.mkv')) return 'video/x-matroska';
     return 'image/jpeg';
   }
 }

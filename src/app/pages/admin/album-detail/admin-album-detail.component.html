@@ -19,13 +19,13 @@
     </header>
 
     <div class="panel upload">
-      <h2>Upload de fotos</h2>
-      <p>Selecione uma ou várias imagens para associar a este álbum.</p>
+      <h2>Upload de fotos e vídeos</h2>
+      <p>Selecione uma ou várias fotos ou vídeos para associar a este álbum.</p>
       <label class="btn btn-primary file-btn">
-        {{ uploading() ? 'Enviando...' : 'Selecionar fotos' }}
+        {{ uploading() ? 'Enviando...' : 'Selecionar arquivos' }}
         <input
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           hidden
           [disabled]="uploading() || deleting()"
@@ -50,14 +50,27 @@
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
           >
             <span class="thumb__num" aria-hidden="true">{{ photoNumber(i) }}</span>
-            <img
-              [src]="thumbUrl(photo)"
-              [alt]="photo.filename"
-              [attr.loading]="i < 12 ? 'eager' : 'lazy'"
-              [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
-              decoding="async"
-              (load)="markLoaded(photo.id)"
-            />
+            @if (isVideo(photo) && !photo.thumbUrl) {
+              <video
+                [src]="photo.url"
+                muted
+                playsinline
+                preload="metadata"
+                (loadeddata)="markLoaded(photo.id)"
+              ></video>
+            } @else {
+              <img
+                [src]="thumbUrl(photo)"
+                [alt]="photo.filename"
+                [attr.loading]="i < 12 ? 'eager' : 'lazy'"
+                [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
+                decoding="async"
+                (load)="markLoaded(photo.id)"
+              />
+            }
+            @if (isVideo(photo)) {
+              <span class="thumb__play" aria-hidden="true"></span>
+            }
           </div>
           <figcaption>
             <span>{{ photo.filename }}</span>
@@ -65,7 +78,7 @@
           </figcaption>
         </figure>
       } @empty {
-        <p class="empty">Nenhuma foto neste álbum ainda.</p>
+        <p class="empty">Nenhuma foto ou vídeo neste álbum ainda.</p>
       }
     </div>
 

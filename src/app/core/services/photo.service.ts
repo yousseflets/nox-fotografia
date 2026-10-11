@@ -20,8 +20,9 @@ import {
   getBytes,
 } from '@angular/fire/storage';
 import { Observable, catchError, map, of } from 'rxjs';
-import { Photo, photoThumbUrl } from '../models/photo.model';
+import { isVideoFile, isVideoPhoto, Photo, photoThumbUrl } from '../models/photo.model';
 import { createImageThumbnail } from '../utils/image-thumbnail';
+import { createVideoPosters } from '../utils/video-poster';
 
 @Injectable({ providedIn: 'root' })
 export class PhotoService {
@@ -64,8 +65,9 @@ export class PhotoService {
     const items = this.sortPhotos(
       snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Photo)
     );
-    const first = items[0];
-    return first ? photoThumbUrl(first) : undefined;
+    const cover = items.find((item) => (isVideoPhoto(item) ? !!item.thumbUrl : !!photoThumbUrl(item)));
+    if (!cover) return undefined;
+    return isVideoPhoto(cover) ? cover.thumbUrl : photoThumbUrl(cover);
   }
 
   private sortPhotos(list: Photo[]): Photo[] {
@@ -109,35 +111,58 @@ export class PhotoService {
     const stamp = Date.now();
     const baseDir = `clients/${clientId}/albums/${albumId}`;
     const storagePath = `${baseDir}/${stamp}_${safeName}`;
-    const thumbStoragePath = `${baseDir}/${stamp}_${safeName.replace(/\.[^.]+$/, '')}_thumb.jpg`;
+    const stem = safeName.replace(/\.[^.]+$/, '');
+    const thumbStoragePath = `${baseDir}/${stamp}_${stem}_thumb.jpg`;
+    const previewStoragePath = `${baseDir}/${stamp}_${stem}_preview.jpg`;
+    const video = isVideoFile(file);
 
     let thumbUrl: string | undefined;
     let previewUrl: string | undefined;
-    try {
-      const thumbBlob = await createImageThumbnail(file, 480, 0.72);
-      onProgress?.(4);
-      const thumb = await this.uploadBlob(thumbBlob, thumbStoragePath, (pct) =>
-        onProgress?.(4 + pct * 0.08)
-      );
-      thumbUrl = thumb.url;
-    } catch (err) {
-      console.warn('[PhotoService] miniatura não gerada', err);
+    if (video) {
+      try {
+        const posters = await createVideoPosters(file);
+        onProgress?.(4);
+        const thumb = await this.uploadBlob(posters.thumb, thumbStoragePath, (pct) =>
+          onProgress?.(4 + pct * 0.08)
+        );
+        thumbUrl = thumb.url;
+        onProgress?.(14);
+        const preview = await this.uploadBlob(posters.preview, previewStoragePath, (pct) =>
+          onProgress?.(14 + pct * 0.16)
+        );
+        previewUrl = preview.url;
+      } catch (err) {
+        console.warn('[PhotoService] capa do vídeo não gerada', err);
+      }
+    } else {
+      try {
+        const thumbBlob = await createImageThumbnail(file, 480, 0.72);
+        onProgress?.(4);
+        const thumb = await this.uploadBlob(thumbBlob, thumbStoragePath, (pct) =>
+          onProgress?.(4 + pct * 0.08)
+        );
+        thumbUrl = thumb.url;
+      } catch (err) {
+        console.warn('[PhotoService] miniatura não gerada', err);
+      }
+
+      try {
+        const previewBlob = await createImageThumbnail(file, 1600, 0.8);
+        onProgress?.(14);
+        const preview = await this.uploadBlob(previewBlob, previewStoragePath, (pct) =>
+          onProgress?.(14 + pct * 0.16)
+        );
+        previewUrl = preview.url;
+      } catch (err) {
+        console.warn('[PhotoService] preview não gerada', err);
+      }
     }
 
-    const previewStoragePath = `${baseDir}/${stamp}_${safeName.replace(/\.[^.]+$/, '')}_preview.jpg`;
-    try {
-      const previewBlob = await createImageThumbnail(file, 1600, 0.8);
-      onProgress?.(14);
-      const preview = await this.uploadBlob(previewBlob, previewStoragePath, (pct) =>
-        onProgress?.(14 + pct * 0.16)
-      );
-      previewUrl = preview.url;
-    } catch (err) {
-      console.warn('[PhotoService] preview não gerada', err);
-    }
-
-    const original = await this.uploadBlob(file, storagePath, (pct) =>
-      onProgress?.(30 + pct * 0.7)
+    const original = await this.uploadBlob(
+      file,
+      storagePath,
+      (pct) => onProgress?.(30 + pct * 0.7),
+      contentTypeFor(file)
     );
 
     const photo: Omit<Photo, 'id'> = {
@@ -145,6 +170,7 @@ export class PhotoService {
       url: original.url,
       filename: file.name,
       storagePath,
+      kind: video ? 'video' : 'image',
       thumbUrl,
       thumbStoragePath: thumbUrl ? thumbStoragePath : undefined,
       previewUrl,
@@ -183,10 +209,12 @@ export class PhotoService {
   private uploadBlob(
     data: Blob | File,
     storagePath: string,
-    onProgress?: (pct: number) => void
+    onProgress?: (pct: number) => void,
+    contentType?: string
   ): Promise<{ url: string; storagePath: string }> {
     const storageRef = ref(this.storage, storagePath);
-    const task = uploadBytesResumable(storageRef, data);
+    const type = contentType || data.type;
+    const task = uploadBytesResumable(storageRef, data, type ? { contentType: type } : undefined);
 
     return new Promise((resolve, reject) => {
       task.on(
@@ -206,4 +234,19 @@ export class PhotoService {
       );
     });
   }
+}
+
+function contentTypeFor(file: File): string | undefined {
+  if (file.type) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.mp4') || name.endsWith('.m4v')) return 'video/mp4';
+  if (name.endsWith('.mov')) return 'video/quicktime';
+  if (name.endsWith('.webm')) return 'video/webm';
+  if (name.endsWith('.avi')) return 'video/x-msvideo';
+  if (name.endsWith('.mkv')) return 'video/x-matroska';
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.webp')) return 'image/webp';
+  if (name.endsWith('.gif')) return 'image/gif';
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
+  return undefined;
 }

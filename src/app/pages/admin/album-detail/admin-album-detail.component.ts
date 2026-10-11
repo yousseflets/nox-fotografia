@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
-import { Photo, photoThumbUrl } from '../../../core/models/photo.model';
+import { isImageFile, isVideoFile, isVideoPhoto, Photo, photoThumbUrl } from '../../../core/models/photo.model';
 import {
   ALBUM_PHOTOS_PAGE_SIZE,
   paginateItems,
@@ -46,6 +46,7 @@ export class AdminAlbumDetailComponent {
   readonly showPager = computed(() => this.allPhotos().length > 0);
 
   readonly thumbUrl = photoThumbUrl;
+  readonly isVideo = isVideoPhoto;
 
   markLoaded(id: string | undefined) {
     if (!id) return;
@@ -64,21 +65,31 @@ export class AdminAlbumDetailComponent {
 
   async onFilesSelected(event: Event, clientId: string) {
     const input = event.target as HTMLInputElement;
-    const files = Array.from(input.files ?? []);
-    if (!files.length || !clientId) return;
+    const files = Array.from(input.files ?? []).filter(
+      (file) => isImageFile(file) || isVideoFile(file)
+    );
+    if (!files.length || !clientId) {
+      this.message.set('Selecione fotos ou vídeos.');
+      input.value = '';
+      return;
+    }
 
     this.uploading.set(true);
     this.message.set('');
 
     try {
       let lastPhoto: Photo | null = null;
+      let images = 0;
+      let videos = 0;
       for (const file of files) {
         lastPhoto = await this.photos.uploadPhoto(file, this.albumId, clientId, (pct) =>
           this.progress.set(pct)
         );
+        if (isVideoFile(file)) videos += 1;
+        else images += 1;
       }
       await this.ensureCover(lastPhoto);
-      this.message.set(`${files.length} foto(s) enviada(s).`);
+      this.message.set(this.uploadSummary(images, videos));
       this.page.set(1);
     } catch {
       this.message.set('Falha no upload. Verifique as regras do Storage e tente novamente.');
@@ -100,7 +111,7 @@ export class AdminAlbumDetailComponent {
 
   async deleteAlbum(title: string) {
     const ok = confirm(
-      'Excluir o álbum "' + title + '"?\nTodas as fotos deste álbum também serão removidas.'
+      'Excluir o álbum "' + title + '"?\nTodas as fotos e vídeos deste álbum também serão removidos.'
     );
     if (!ok) return;
 
@@ -116,11 +127,20 @@ export class AdminAlbumDetailComponent {
     }
   }
 
+  private uploadSummary(images: number, videos: number): string {
+    const parts: string[] = [];
+    if (images) parts.push(`${images} foto(s)`);
+    if (videos) parts.push(`${videos} vídeo(s)`);
+    return `${parts.join(' e ')} enviado(s).`;
+  }
+
   private async ensureCover(photo: Photo | null) {
     if (!photo) return;
     const album = await firstValueFrom(this.albums.getById(this.albumId));
     if (!album || album.coverUrl) return;
-    await this.albums.update(this.albumId, { coverUrl: photoThumbUrl(photo) });
+    const cover = isVideoPhoto(photo) ? photo.thumbUrl : photoThumbUrl(photo);
+    if (!cover) return;
+    await this.albums.update(this.albumId, { coverUrl: cover });
   }
 
   private async refreshCoverAfterDelete(removed: Photo) {
