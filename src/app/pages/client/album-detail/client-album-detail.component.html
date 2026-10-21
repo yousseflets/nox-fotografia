@@ -33,6 +33,7 @@
             class="thumb"
             [class.thumb--loaded]="loadedIds()[photo.id || '']"
             [attr.aria-label]="(isVideo(photo) ? 'Reproduzir ' : 'Abrir ') + photo.filename"
+            (contextmenu)="$event.preventDefault()"
             (click)="openViewer(i)"
           >
             <span class="thumb__num" aria-hidden="true">{{ photoNumber(i) }}</span>
@@ -51,6 +52,7 @@
                 [attr.loading]="i < 12 ? 'eager' : 'lazy'"
                 [attr.fetchpriority]="i < 4 ? 'high' : 'auto'"
                 decoding="async"
+                draggable="false"
                 (load)="markLoaded(photo.id)"
               />
             }
@@ -156,7 +158,11 @@
       </button>
 
       @for (id of [view.id]; track id) {
-        <div class="viewer__media" (click)="$event.stopPropagation()">
+        <div
+          class="viewer__media"
+          (click)="$event.stopPropagation()"
+          (contextmenu)="$event.preventDefault()"
+        >
           @if (view.isVideo) {
             <video
               class="viewer__video"

@@ -22,9 +22,10 @@
           type="button"
           class="thumb"
           [attr.aria-label]="'Abrir ' + photo.filename"
+          (contextmenu)="$event.preventDefault()"
           (click)="openViewer(photo)"
         >
-          <img [src]="imageUrl(photo)" [alt]="photo.filename" loading="lazy" />
+          <img [src]="imageUrl(photo)" [alt]="photo.filename" loading="lazy" draggable="false" />
           @if (isPaid(photo)) {
             <span class="paid">Paga</span>
           } @else {
@@ -106,8 +107,12 @@
         &#8249;
       </button>
 
-      <div class="viewer__media" (click)="$event.stopPropagation()">
-        <img [src]="imageUrl(view.photo)" [alt]="view.photo.filename" />
+      <div
+        class="viewer__media"
+        (click)="$event.stopPropagation()"
+        (contextmenu)="$event.preventDefault()"
+      >
+        <img [src]="imageUrl(view.photo)" [alt]="view.photo.filename" draggable="false" />
       </div>
 
       <button
