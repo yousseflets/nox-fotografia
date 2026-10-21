@@ -12,10 +12,11 @@ import {
   onSnapshot,
   QueryConstraint,
 } from '@angular/fire/firestore';
-import { Observable, catchError, firstValueFrom, map, of } from 'rxjs';
+import { Observable, catchError, firstValueFrom, map, of, take } from 'rxjs';
 import { Album } from '../models/album.model';
 import { AppUser } from '../models/user.model';
 import { PhotoService } from './photo.service';
+import { SaleService } from './sale.service';
 
 function collection$<T extends object>(
   firestore: Firestore,
@@ -65,6 +66,7 @@ function doc$<T extends object>(
 export class AlbumService {
   private readonly firestore = inject(Firestore);
   private readonly photos = inject(PhotoService);
+  private readonly sales = inject(SaleService);
 
   getAll(): Observable<Album[]> {
     return collection$<Album>(
@@ -113,7 +115,11 @@ export class AlbumService {
   }
 
   async deleteAlbum(albumId: string): Promise<void> {
+    const album = await firstValueFrom(this.getById(albumId).pipe(take(1)));
     await this.photos.deleteByAlbum(albumId);
+    if (album?.saleEventId) {
+      await this.sales.deleteEvent(album.saleEventId);
+    }
     await this.delete(albumId);
   }
 }

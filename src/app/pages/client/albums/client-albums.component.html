@@ -15,7 +15,12 @@
         </div>
         <div class="album__meta">
           <h2>{{ album.title }}</h2>
-          <span>{{ album.createdAt | date: 'dd/MM/yyyy' }}</span>
+          <span>
+            {{ album.createdAt | date: 'dd/MM/yyyy' }}
+            @if (isSale(album)) {
+              · {{ formatPrice(album.priceCents || 0) }} / foto
+            }
+          </span>
         </div>
       </a>
     } @empty {

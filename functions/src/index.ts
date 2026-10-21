@@ -119,9 +119,9 @@ async function getStorageDownloadUrl(storagePath: string): Promise<string> {
 async function buildDownloadFiles(
   db: Firestore,
   order: FirebaseFirestore.DocumentData
-): Promise<{ filename: string; url: string }[]> {
+): Promise<{ photoId?: string; filename: string; url: string }[]> {
   const items = Array.isArray(order['items']) ? order['items'] : [];
-  const files: { filename: string; url: string }[] = [];
+  const files: { photoId?: string; filename: string; url: string }[] = [];
 
   for (const item of items) {
     const photoId = String(item?.photoId || '');
@@ -134,7 +134,7 @@ async function buildDownloadFiles(
     if (!storagePath) continue;
 
     const url = await getStorageDownloadUrl(storagePath);
-    files.push({ filename, url });
+    files.push({ photoId, filename, url });
   }
 
   return files;
@@ -467,6 +467,100 @@ export const getOrderDownloads = onCall({ cors: true }, async (request) => {
   const files = await fulfillOrderDownloads(db, orderId, order);
   return { files };
 });
+
+export const getAlbumPurchases = onCall({ cors: true }, async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError('unauthenticated', 'Entre na sua conta para ver as fotos pagas.');
+  }
+
+  const albumId = String(request.data?.albumId || '').trim();
+  if (!albumId) {
+    throw new HttpsError('invalid-argument', 'Album obrigatorio.');
+  }
+
+  const db = getFirestore();
+  const albumSnap = await db.doc(`albums/${albumId}`).get();
+  if (!albumSnap.exists) {
+    throw new HttpsError('not-found', 'Album nao encontrado.');
+  }
+
+  const album = albumSnap.data()!;
+  if (String(album['clientId'] || '') !== request.auth.uid) {
+    throw new HttpsError('permission-denied', 'Este album nao e seu.');
+  }
+  if (album['mode'] !== 'sale') {
+    return { files: [] as AlbumPurchaseFile[] };
+  }
+
+  const eventId = String(album['saleEventId'] || '');
+  if (!eventId) return { files: [] as AlbumPurchaseFile[] };
+
+  const ordersSnap = await db.collection('orders').where('eventId', '==', eventId).get();
+  const files: AlbumPurchaseFile[] = [];
+  const seen = new Set<string>();
+
+  for (const orderDoc of ordersSnap.docs) {
+    const order = orderDoc.data();
+    if (order['status'] !== 'paid') continue;
+    const purchases = await filesForPaidOrder(db, orderDoc.id, order);
+    for (const file of purchases) {
+      if (!file.photoId || seen.has(file.photoId)) continue;
+      seen.add(file.photoId);
+      files.push(file);
+    }
+  }
+
+  return { files };
+});
+
+type AlbumPurchaseFile = { photoId: string; filename: string; url: string };
+
+async function filesForPaidOrder(
+  db: Firestore,
+  orderId: string,
+  order: FirebaseFirestore.DocumentData
+): Promise<AlbumPurchaseFile[]> {
+  const items = Array.isArray(order['items']) ? order['items'] : [];
+  const existing = Array.isArray(order['downloadFiles']) ? order['downloadFiles'] : [];
+  const result: AlbumPurchaseFile[] = [];
+  const nextFiles = [...existing];
+  let changed = false;
+
+  for (const item of items) {
+    const photoId = String(item?.photoId || '');
+    if (!photoId) continue;
+    const filename = String(item?.filename || photoId);
+    const saved =
+      existing.find((file) => String(file?.photoId || '') === photoId) ||
+      existing.find((file) => file?.url && String(file?.filename || '') === filename);
+
+    if (saved?.url) {
+      result.push({
+        photoId,
+        filename: String(saved.filename || filename),
+        url: String(saved.url),
+      });
+      continue;
+    }
+
+    const photoSnap = await db.doc(`salePhotos/${photoId}`).get();
+    if (!photoSnap.exists) continue;
+    const storagePath = String(photoSnap.data()?.['storagePath'] || '');
+    if (!storagePath) continue;
+
+    const url = await getStorageDownloadUrl(storagePath);
+    const file = { photoId, filename, url };
+    result.push(file);
+    nextFiles.push(file);
+    changed = true;
+  }
+
+  if (changed) {
+    await db.doc(`orders/${orderId}`).update({ downloadFiles: nextFiles });
+  }
+
+  return result;
+}
 
 async function enqueuePaidEmail(input: {
   to: string;

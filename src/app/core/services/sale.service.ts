@@ -18,6 +18,7 @@ import {
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
+  getBytes,
 } from '@angular/fire/storage';
 import { Functions, httpsCallable } from '@angular/fire/functions';
 import { Observable, catchError, of } from 'rxjs';
@@ -116,6 +117,7 @@ export class SaleService {
       description: input.description || '',
       priceCents,
       active: !!input.active,
+      audience: input.audience === 'client' ? 'client' : 'public',
       slug,
       createdAt: new Date().toISOString(),
     });
@@ -204,6 +206,55 @@ export class SaleService {
     const docRef = await addDoc(collection(this.firestore, 'salePhotos'), photo);
     onProgress?.(100);
     return { id: docRef.id, ...photo };
+  }
+
+  /** Gera de novo a prévia e a miniatura a partir do original, com a marca atual. */
+  async rebuildPreview(photo: SalePhoto): Promise<SalePhoto> {
+    if (!photo.id || !photo.storagePath || !photo.eventId) {
+      throw new Error('Foto sem arquivo original.');
+    }
+
+    const bytes = await getBytes(ref(this.storage, photo.storagePath));
+    const filename = photo.filename || 'foto.jpg';
+    const file = new File([bytes], filename, { type: contentTypeFromName(filename) });
+    const previewBlob = await createWatermarkedPreview(file);
+    const thumbBlob = await createImageThumbnail(
+      new File([previewBlob], 'preview.jpg', { type: 'image/jpeg' })
+    );
+
+    const safeName = filename.replace(/[^\w.\-]+/g, '_');
+    const stem = safeName.replace(/\.[^.]+$/, '');
+    const stamp = Date.now();
+    const base = `sales/${photo.eventId}`;
+    const previewStoragePath = `${base}/previews/${stamp}_${stem}_wm.jpg`;
+    const thumbStoragePath = `${base}/thumbs/${stamp}_${stem}_thumb.jpg`;
+
+    const previewUrl = await this.uploadBlob(previewBlob, previewStoragePath);
+    const thumbUrl = await this.uploadBlob(thumbBlob, thumbStoragePath);
+
+    await updateDoc(doc(this.firestore, `salePhotos/${photo.id}`), {
+      previewUrl,
+      previewStoragePath,
+      thumbUrl,
+      thumbStoragePath,
+    });
+
+    for (const path of [photo.previewStoragePath, photo.thumbStoragePath]) {
+      if (!path) continue;
+      try {
+        await deleteObject(ref(this.storage, path));
+      } catch {
+        // arquivo antigo pode já ter sido removido
+      }
+    }
+
+    return {
+      ...photo,
+      previewUrl,
+      previewStoragePath,
+      thumbUrl,
+      thumbStoragePath,
+    };
   }
 
   async ensureCover(eventId: string, coverUrl: string): Promise<void> {
@@ -442,6 +493,17 @@ export class SaleService {
     return result.data.files;
   }
 
+  async getAlbumPurchases(
+    albumId: string
+  ): Promise<{ photoId: string; filename: string; url: string }[]> {
+    const callable = httpsCallable<
+      { albumId: string },
+      { files: { photoId: string; filename: string; url: string }[] }
+    >(this.functions, 'getAlbumPurchases');
+    const result = await callable({ albumId });
+    return result.data.files ?? [];
+  }
+
   previewUrl = salePhotoPreview;
 
   private async getPhotosOnce(eventId: string): Promise<SalePhoto[]> {
@@ -483,4 +545,12 @@ export class SaleService {
       );
     });
   }
+}
+
+function contentTypeFromName(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  return 'image/jpeg';
 }

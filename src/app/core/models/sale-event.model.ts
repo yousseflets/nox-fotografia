@@ -9,6 +9,8 @@ export interface SaleEvent {
   coverUrl?: string;
   active: boolean;
   createdAt: string;
+  /** client = álbum privado do cliente. Ausente = evento público. */
+  audience?: 'public' | 'client';
 }
 
 export function formatPriceBRL(cents: number): string {

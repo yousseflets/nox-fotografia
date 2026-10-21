@@ -5,7 +5,8 @@ import { from, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
-import { Album } from '../../../core/models/album.model';
+import { Album, isSaleAlbum } from '../../../core/models/album.model';
+import { formatPriceBRL } from '../../../core/models/sale-event.model';
 
 @Component({
   selector: 'app-client-albums',
@@ -24,10 +25,13 @@ export class ClientAlbumsComponent {
     switchMap((albums) => from(this.withCovers(albums)))
   );
 
+  readonly isSale = isSaleAlbum;
+  readonly formatPrice = formatPriceBRL;
+
   private async withCovers(albums: Album[]): Promise<Album[]> {
     return Promise.all(
       albums.map(async (album) => {
-        if (album.coverUrl || !album.id) return album;
+        if (album.coverUrl || !album.id || isSaleAlbum(album)) return album;
         const coverUrl = await this.photos.getAlbumCoverUrl(album.id);
         if (!coverUrl) return album;
         try {

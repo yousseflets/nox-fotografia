@@ -3,7 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs';
+import { switchMap, map } from 'rxjs';
 import { SaleService } from '../../../core/services/sale.service';
 import { SaleEvent, formatPriceBRL } from '../../../core/models/sale-event.model';
 
@@ -23,7 +23,8 @@ export class AdminSalesComponent {
 
   private readonly listTick = signal(0);
   readonly events$ = toObservable(this.listTick).pipe(
-    switchMap(() => this.sales.getEvents(false))
+    switchMap(() => this.sales.getEvents(false)),
+    map((events) => events.filter((event) => event.audience !== 'client'))
   );
   readonly loading = signal(false);
   readonly message = signal('');

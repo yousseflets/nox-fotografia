@@ -5,13 +5,16 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AlbumService, UserService } from '../../../core/services/album.service';
 import { MailService } from '../../../core/services/mail.service';
-import { Album } from '../../../core/models/album.model';
+import { SaleService } from '../../../core/services/sale.service';
+import { Album, isSaleAlbum } from '../../../core/models/album.model';
+import { formatPriceBRL } from '../../../core/models/sale-event.model';
 import { AppUser } from '../../../core/models/user.model';
+import { CurrencyBrlInputDirective } from '../../../shared/directives/currency-brl-input.directive';
 
 @Component({
   selector: 'app-admin-albums',
   standalone: true,
-  imports: [ReactiveFormsModule, AsyncPipe, RouterLink],
+  imports: [ReactiveFormsModule, AsyncPipe, RouterLink, CurrencyBrlInputDirective],
   templateUrl: './admin-albums.component.html',
   styleUrl: './admin-albums.component.scss',
 })
@@ -20,18 +23,23 @@ export class AdminAlbumsComponent {
   private readonly albums = inject(AlbumService);
   private readonly users = inject(UserService);
   private readonly mail = inject(MailService);
+  private readonly sales = inject(SaleService);
 
   readonly albums$ = this.albums.getAll();
   readonly clients$ = this.users.getClients();
   readonly loading = signal(false);
   readonly message = signal('');
   readonly error = signal('');
+  readonly formatPrice = formatPriceBRL;
+  readonly isSale = isSaleAlbum;
 
   readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     clientId: ['', Validators.required],
     description: [''],
     notifyClient: [true],
+    mode: ['delivery' as 'delivery' | 'sale'],
+    priceReais: [15],
   });
 
   async submit() {
@@ -48,14 +56,50 @@ export class AdminAlbumsComponent {
       const value = this.form.getRawValue();
       const clients = await firstValueFrom(this.clients$);
       const client = clients.find((c: AppUser) => c.uid === value.clientId);
+      const mode = value.mode;
+      let priceCents: number | undefined;
+      let saleEventId: string | undefined;
 
-      await this.albums.create({
+      if (mode === 'sale') {
+        const price = Number(value.priceReais);
+        if (!Number.isFinite(price) || price < 1) {
+          this.error.set('Informe um preço de pelo menos R$ 1,00 por foto.');
+          return;
+        }
+        priceCents = Math.round(price * 100);
+        saleEventId = await this.sales.createEvent({
+          title: value.title.trim(),
+          eventDate: new Date().toISOString().slice(0, 10),
+          description: value.description.trim(),
+          priceCents,
+          active: true,
+          audience: 'client',
+        });
+      }
+
+      const album: Omit<Album, 'id'> = {
         title: value.title,
         clientId: value.clientId,
         clientName: client?.name ?? '',
         description: value.description,
         createdAt: new Date().toISOString(),
-      });
+        mode,
+      };
+      if (priceCents != null) album.priceCents = priceCents;
+      if (saleEventId) album.saleEventId = saleEventId;
+
+      try {
+        await this.albums.create(album);
+      } catch (err) {
+        if (saleEventId) {
+          try {
+            await this.sales.deleteEvent(saleEventId);
+          } catch {
+            // o álbum não chegou a ser criado
+          }
+        }
+        throw err;
+      }
 
       let mailNote = '';
       if (value.notifyClient) {
@@ -81,7 +125,14 @@ export class AdminAlbumsComponent {
       }
 
       this.message.set('Ã�lbum criado. Abra-o para enviar as fotos.' + mailNote);
-      this.form.reset({ title: '', clientId: '', description: '', notifyClient: true });
+      this.form.reset({
+        title: '',
+        clientId: '',
+        description: '',
+        notifyClient: true,
+        mode: 'delivery',
+        priceReais: 15,
+      });
     } catch {
       this.error.set('NÃ£o foi possÃ­vel criar o Ã¡lbum.');
     } finally {

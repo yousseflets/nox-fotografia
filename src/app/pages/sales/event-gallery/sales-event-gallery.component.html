@@ -4,6 +4,9 @@
     <a class="back" routerLink="/fotos">&larr; Fotos &agrave; Venda</a>
 
     @if (event$ | async; as event) {
+      @if (event.audience === 'client') {
+        <p class="empty">Evento n&atilde;o encontrado.</p>
+      } @else {
       <header class="head">
         <div>
           <p class="kicker">Evento</p>
@@ -44,6 +47,7 @@
             Ir ao carrinho
           </button>
         </div>
+      }
       }
     } @else {
       <p class="empty">Evento n&atilde;o encontrado.</p>

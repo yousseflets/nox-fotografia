@@ -1,0 +1,145 @@
+<section class="sale">
+  <a class="back" routerLink="/cliente">&larr; Meus &aacute;lbuns</a>
+
+  <header class="head">
+    <div>
+      <p class="kicker">Escolha suas fotos</p>
+      <h1>{{ album().title }}</h1>
+      @if (album().description) {
+        <p>{{ album().description }}</p>
+      }
+      <p>{{ formatPrice(album().priceCents || 0) }} por foto</p>
+    </div>
+    <a class="btn btn-outline cart-link" routerLink="/carrinho">
+      Carrinho ({{ cart.count() }})
+    </a>
+  </header>
+
+  <div class="grid">
+    @for (photo of photos(); track photo.id) {
+      <figure [class.selected]="isSelected(photo)">
+        <button
+          type="button"
+          class="thumb"
+          [attr.aria-label]="'Abrir ' + photo.filename"
+          (click)="openViewer(photo)"
+        >
+          <img [src]="imageUrl(photo)" [alt]="photo.filename" loading="lazy" />
+          @if (isPaid(photo)) {
+            <span class="paid">Paga</span>
+          } @else {
+            <span class="price">{{ formatPrice(album().priceCents || 0) }}</span>
+          }
+        </button>
+        @if (!isPaid(photo)) {
+          <button
+            type="button"
+            class="check"
+            [class.check--on]="isSelected(photo)"
+            [attr.aria-label]="isSelected(photo) ? 'Tirar da seleção' : 'Selecionar ' + photo.filename"
+            [attr.aria-pressed]="isSelected(photo)"
+            (click)="toggle(photo)"
+          >
+            @if (isSelected(photo)) {
+              <span aria-hidden="true">&#10003;</span>
+            }
+          </button>
+        }
+        <figcaption>
+          <span>{{ photo.filename }}</span>
+          @if (isPaid(photo)) {
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="downloadingId() === photo.id"
+              (click)="download(photo)"
+            >
+              {{ downloadingId() === photo.id ? 'Baixando...' : 'Baixar' }}
+            </button>
+          } @else {
+            <button type="button" class="btn btn-ghost" (click)="buyOne(photo); $event.stopPropagation()">
+              Comprar
+            </button>
+          }
+        </figcaption>
+      </figure>
+    } @empty {
+      <p class="empty">Fotos em breve.</p>
+    }
+  </div>
+
+  @if (selectedCount() > 0) {
+    <div class="bar">
+      <span>{{ selectedCount() }} foto(s) &middot; {{ formatPrice(selectedTotal()) }}</span>
+      <button type="button" class="btn btn-primary" (click)="addSelectedToCart()">
+        Ir ao carrinho
+      </button>
+    </div>
+  }
+</section>
+
+@if (viewer(); as view) {
+  <div
+    class="viewer"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Visualizar foto"
+    (click)="closeViewer()"
+  >
+    <button
+      class="viewer__close"
+      type="button"
+      aria-label="Fechar"
+      (click)="closeViewer(); $event.stopPropagation()"
+    >
+      &times;
+    </button>
+
+    <div class="viewer__frame">
+      <button
+        type="button"
+        class="viewer__nav"
+        aria-label="Foto anterior"
+        [disabled]="view.isFirst"
+        (click)="prevPhoto(); $event.stopPropagation()"
+      >
+        &#8249;
+      </button>
+
+      <div class="viewer__media" (click)="$event.stopPropagation()">
+        <img [src]="imageUrl(view.photo)" [alt]="view.photo.filename" />
+      </div>
+
+      <button
+        type="button"
+        class="viewer__nav"
+        aria-label="Próxima foto"
+        [disabled]="view.isLast"
+        (click)="nextPhoto(); $event.stopPropagation()"
+      >
+        &#8250;
+      </button>
+    </div>
+
+    <div class="viewer__footer" (click)="$event.stopPropagation()">
+      <span>{{ view.index + 1 }} / {{ view.total }}</span>
+      @if (isPaid(view.photo)) {
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="downloadingId() === view.photo.id"
+          (click)="download(view.photo)"
+        >
+          {{ downloadingId() === view.photo.id ? 'Baixando...' : "Baixar sem marca d'água" }}
+        </button>
+      } @else {
+        <button type="button" class="btn btn-outline" (click)="toggle(view.photo)">
+          {{ isSelected(view.photo) ? 'Selecionada' : 'Selecionar' }}
+        </button>
+        <button type="button" class="btn btn-primary" (click)="buyOne(view.photo)">
+          Comprar
+        </button>
+      }
+    </div>
+  </div>
+}

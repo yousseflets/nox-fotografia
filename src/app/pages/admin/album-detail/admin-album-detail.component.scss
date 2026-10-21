@@ -20,6 +20,23 @@
   margin-top: 1rem;
 }
 
+.upload__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.upload__actions .file-btn {
+  margin-top: 0;
+}
+
+.price-field {
+  max-width: 12rem;
+  margin: 1rem 0;
+}
+
 .progress {
   margin-top: 1rem;
   height: 4px;

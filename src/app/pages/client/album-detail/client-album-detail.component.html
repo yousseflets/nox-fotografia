@@ -1,7 +1,9 @@
+@if (album$ | async; as album) {
+  @if (isSale(album)) {
+    <app-client-album-sale [album]="album" />
+  } @else {
 <section class="page">
   <a class="back" routerLink="/cliente">&larr; Meus &aacute;lbuns</a>
-
-  @if (album$ | async; as album) {
     <header class="page-head">
       <div>
         <p class="page-kicker">&Aacute;lbum</p>
@@ -113,10 +115,13 @@
         </button>
       </nav>
     }
-  } @else {
-    <p class="empty">&Aacute;lbum n&atilde;o encontrado ou sem permiss&atilde;o de acesso.</p>
-  }
 </section>
+  }
+} @else {
+  <section class="page">
+    <p class="empty">&Aacute;lbum n&atilde;o encontrado ou sem permiss&atilde;o de acesso.</p>
+  </section>
+}
 
 @if (viewer(); as view) {
   <div

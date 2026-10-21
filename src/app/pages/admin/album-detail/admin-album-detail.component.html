@@ -6,7 +6,14 @@
       <div>
         <p class="page-kicker">Álbum</p>
         <h1>{{ album.title }}</h1>
-        <p>Cliente: {{ album.clientName || album.clientId }}</p>
+        <p>
+          Cliente: {{ album.clientName || album.clientId }}
+          @if (isSale(album)) {
+            · {{ formatPrice(album.priceCents || 0) }} por foto
+          } @else {
+            · Entrega completa
+          }
+        </p>
       </div>
       <button
         type="button"
@@ -18,6 +25,77 @@
       </button>
     </header>
 
+    @if (isSale(album)) {
+      <form class="panel upload" [formGroup]="priceForm" (ngSubmit)="savePrice(album)">
+        <h2>Preço por foto</h2>
+        <p>O cliente vê a galeria no estilo de Fotos à Venda e paga só as fotos escolhidas.</p>
+        <div class="form-field price-field">
+          <label for="priceReais">Valor (R$)</label>
+          <input
+            id="priceReais"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            appCurrencyBrl
+            formControlName="priceReais"
+            placeholder="0,00"
+          />
+        </div>
+        <button class="btn btn-outline" type="submit" [disabled]="savingPrice() || uploading()">
+          {{ savingPrice() ? 'Salvando...' : 'Salvar preço' }}
+        </button>
+      </form>
+
+      <div class="panel upload">
+        <h2>Upload de fotos</h2>
+        <p>As fotos públicas ganham marca d'água NOX. O original fica privado até o pagamento.</p>
+        <div class="upload__actions">
+          <label class="btn btn-primary file-btn">
+            {{ uploading() ? 'Enviando...' : 'Selecionar fotos' }}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              [disabled]="uploading() || deleting()"
+              (change)="onSaleFilesSelected($event, album)"
+            />
+          </label>
+          <button
+            type="button"
+            class="btn btn-outline"
+            [disabled]="uploading() || deleting()"
+            (click)="rebuildSaleMarks(album)"
+          >
+            Atualizar marcas d'água
+          </button>
+        </div>
+        @if (uploading()) {
+          <div class="progress">
+            <span [style.width.%]="progress()"></span>
+          </div>
+        }
+        @if (message()) {
+          <p class="msg">{{ message() }}</p>
+        }
+      </div>
+
+      <div class="gallery">
+        @for (photo of salePhotos$ | async; track photo.id) {
+          <figure>
+            <div class="thumb thumb--loaded">
+              <img [src]="salePreview(photo)" [alt]="photo.filename" loading="lazy" />
+            </div>
+            <figcaption>
+              <span>{{ photo.filename }}</span>
+              <button type="button" class="btn btn-ghost" (click)="removeSale(photo, album)">Remover</button>
+            </figcaption>
+          </figure>
+        } @empty {
+          <p class="empty">Nenhuma foto à venda neste álbum ainda.</p>
+        }
+      </div>
+    } @else {
     <div class="panel upload">
       <h2>Upload de fotos e vídeos</h2>
       <p>Selecione uma ou várias fotos ou vídeos para associar a este álbum.</p>
@@ -102,6 +180,7 @@
           Próxima
         </button>
       </nav>
+    }
     }
   } @else {
     <p class="empty">Álbum não encontrado.</p>

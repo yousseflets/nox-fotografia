@@ -8,6 +8,8 @@ import { saveAs } from 'file-saver';
 import { AlbumService } from '../../../core/services/album.service';
 import { PhotoService } from '../../../core/services/photo.service';
 import { Photo, photoDisplayUrl, photoThumbUrl, isVideoPhoto } from '../../../core/models/photo.model';
+import { isSaleAlbum } from '../../../core/models/album.model';
+import { ClientAlbumSaleComponent } from '../album-sale/client-album-sale.component';
 import {
   ALBUM_PHOTOS_PAGE_SIZE,
   paginateItems,
@@ -17,7 +19,7 @@ import {
 @Component({
   selector: 'app-client-album-detail',
   standalone: true,
-  imports: [AsyncPipe, RouterLink],
+  imports: [AsyncPipe, RouterLink, ClientAlbumSaleComponent],
   templateUrl: './client-album-detail.component.html',
   styleUrl: './client-album-detail.component.scss',
 })
@@ -100,6 +102,7 @@ export class ClientAlbumDetailComponent {
 
   readonly thumbUrl = photoThumbUrl;
   readonly isVideo = isVideoPhoto;
+  readonly isSale = isSaleAlbum;
 
   constructor() {
     effect(() => {

@@ -2,7 +2,7 @@
   <header>
     <p class="page-kicker">Ensaios</p>
     <h1>Álbuns</h1>
-    <p>Crie ensaios e associe a um cliente.</p>
+    <p>Crie um ensaio de entrega completa ou um álbum em que o cliente escolhe e paga por foto.</p>
   </header>
 
   <div class="grid">
@@ -25,6 +25,37 @@
         <label for="description">Descrição</label>
         <textarea id="description" rows="3" formControlName="description"></textarea>
       </div>
+      <fieldset class="modes">
+        <legend>Tipo do álbum</legend>
+        <label class="mode">
+          <input type="radio" formControlName="mode" value="delivery" />
+          <span>
+            <strong>Entrega completa</strong>
+            O cliente vê e baixa todas as fotos, como hoje.
+          </span>
+        </label>
+        <label class="mode">
+          <input type="radio" formControlName="mode" value="sale" />
+          <span>
+            <strong>Valor por foto</strong>
+            O cliente escolhe as fotos e paga, no mesmo estilo de Fotos à Venda.
+          </span>
+        </label>
+      </fieldset>
+      @if (form.controls.mode.value === 'sale') {
+        <div class="form-field">
+          <label for="priceReais">Preço por foto (R$)</label>
+          <input
+            id="priceReais"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            appCurrencyBrl
+            formControlName="priceReais"
+            placeholder="0,00"
+          />
+        </div>
+      }
       <div class="form-field form-field--switch">
         <label class="switch">
           <input type="checkbox" formControlName="notifyClient" />
@@ -51,7 +82,14 @@
           <li>
             <a [routerLink]="['/admin/albuns', album.id]">
               <strong>{{ album.title }}</strong>
-              <span>{{ album.clientName || album.clientId }}</span>
+              <span>
+                {{ album.clientName || album.clientId }}
+                @if (isSale(album)) {
+                  · {{ formatPrice(album.priceCents || 0) }} / foto
+                } @else {
+                  · Entrega completa
+                }
+              </span>
             </a>
             <button
               type="button"

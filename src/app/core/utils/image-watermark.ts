@@ -18,21 +18,23 @@ export async function createWatermarkedPreview(
     ctx.drawImage(bitmap, 0, 0, width, height);
 
     const label = 'NOX Fotografia';
-    const fontSize = Math.max(22, Math.round(Math.min(width, height) * 0.055));
+    const fontSize = Math.max(22, Math.round(Math.min(width, height) * 0.045));
     ctx.save();
     ctx.translate(width / 2, height / 2);
-    ctx.rotate(-Math.PI / 5);
+    ctx.rotate(-Math.PI / 6);
     ctx.font = `700 ${fontSize}px Georgia, 'Times New Roman', serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.lineWidth = Math.max(3, fontSize * 0.1);
-    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillStyle = 'rgba(212,175,55,0.72)';
+    ctx.lineWidth = Math.max(2, fontSize * 0.08);
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillStyle = 'rgba(212,175,55,0.55)';
 
-    const stepX = fontSize * 7;
-    const stepY = fontSize * 3.2;
-    for (let y = -height; y <= height; y += stepY) {
-      for (let x = -width; x <= width; x += stepX) {
+    const textWidth = ctx.measureText(label).width;
+    const stepX = Math.ceil(textWidth + fontSize * 2.4);
+    const stepY = Math.ceil(fontSize * 5.2);
+    const span = Math.hypot(width, height);
+    for (let y = -span; y <= span; y += stepY) {
+      for (let x = -span; x <= span; x += stepX) {
         const offset = (Math.round(y / stepY) % 2) * (stepX / 2);
         ctx.strokeText(label, x + offset, y);
         ctx.fillText(label, x + offset, y);
